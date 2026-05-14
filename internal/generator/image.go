@@ -14,8 +14,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/dsoprea/go-exif/v3"
-	exifcommon "github.com/dsoprea/go-exif/v3/common"
+	"github.com/outis/ghost-rizz/internal/exifutil"
 	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
 	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
 )
@@ -85,7 +84,7 @@ func createDummyJPEGWithEXIF(filename string) error {
 	}
 	sl := intfc.(*jpegstructure.SegmentList)
 
-	ib, err := buildBaseEXIF()
+	ib, err := exifutil.BuildBaseEXIF()
 	if err != nil {
 		return err
 	}
@@ -127,7 +126,7 @@ func createDummyPNGWithEXIF(filename string) error {
 	}
 	cs := intfc.(*pngstructure.ChunkSlice)
 
-	ib, err := buildBaseEXIF()
+	ib, err := exifutil.BuildBaseEXIF()
 	if err != nil {
 		return err
 	}
@@ -146,66 +145,4 @@ func createDummyPNGWithEXIF(filename string) error {
 	return cs.WriteTo(outF)
 }
 
-func addTag(ib *exif.IfdBuilder, name string, value interface{}) error {
-	if err := ib.AddStandardWithName(name, value); err != nil {
-		return fmt.Errorf("failed to add EXIF tag %q: %w", name, err)
-	}
-	return nil
-}
 
-func buildBaseEXIF() (*exif.IfdBuilder, error) {
-	im, err := exifcommon.NewIfdMappingWithStandard()
-	if err != nil {
-		return nil, err
-	}
-	ti := exif.NewTagIndex()
-
-	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
-
-	for _, call := range []func() error{
-		func() error { return addTag(ib, "ImageWidth", []uint32{800}) },
-		func() error { return addTag(ib, "ImageLength", []uint32{600}) },
-		func() error { return addTag(ib, "Make", "Ghost-Rizz Generator") },
-		func() error { return addTag(ib, "Model", "Dummy 1.0") },
-		func() error { return addTag(ib, "Software", "Ghost-Rizz OS 1.0") },
-		func() error { return addTag(ib, "DateTime", "2026:05:13 12:00:00") },
-	} {
-		if err := call(); err != nil {
-			return nil, err
-		}
-	}
-
-	exifIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/Exif")
-	if err != nil {
-		return nil, err
-	}
-	for _, call := range []func() error{
-		func() error { return addTag(exifIb, "DateTimeOriginal", "2026:05:13 12:00:00") },
-		func() error {
-			return addTag(exifIb, "ExposureTime", []exifcommon.Rational{{Numerator: 1, Denominator: 100}})
-		},
-	} {
-		if err := call(); err != nil {
-			return nil, err
-		}
-	}
-
-	gpsIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/GPSInfo")
-	if err != nil {
-		return nil, err
-	}
-	for _, call := range []func() error{
-		func() error { return addTag(gpsIb, "GPSLatitudeRef", "N") },
-		func() error {
-			return addTag(gpsIb, "GPSLatitude", []exifcommon.Rational{
-				{Numerator: 40, Denominator: 1}, {Numerator: 45, Denominator: 1}, {Numerator: 0, Denominator: 1},
-			})
-		},
-	} {
-		if err := call(); err != nil {
-			return nil, err
-		}
-	}
-
-	return ib, nil
-}

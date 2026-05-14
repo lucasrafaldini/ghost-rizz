@@ -7,6 +7,7 @@ import (
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
+	"github.com/outis/ghost-rizz/internal/exifutil"
 )
 
 func TestGenerateImages(t *testing.T) {
@@ -67,10 +68,16 @@ func TestCreateDummyPNGWithEXIF_FileError(t *testing.T) {
 }
 
 func TestCreateDummyJPEGWithEXIF_TempFileError(t *testing.T) {
-	// Force error in temp file creation by using a path that is a file
+	// Force error in temp file creation by making the temp-file path a directory.
 	tmp := filepath.Join(t.TempDir(), "file.jpg")
-	_ = os.WriteFile(tmp, []byte("x"), 0644)
-	// This will fail when trying to create tmp + ".tmp"
+	if err := os.MkdirAll(tmp+".tmp", 0755); err != nil {
+		t.Fatalf("failed to create temp-path directory: %v", err)
+	}
+
+	err := createDummyJPEGWithEXIF(tmp)
+	if err == nil {
+		t.Errorf("expected error when temp file path is a directory")
+	}
 }
 
 func TestCreateDummyJPEGWithEXIF_OutFileError(t *testing.T) {
@@ -94,7 +101,7 @@ func TestCreateDummyPNGWithEXIF_OutFileError(t *testing.T) {
 }
 
 func TestBuildBaseEXIF(t *testing.T) {
-	ib, err := buildBaseEXIF()
+	ib, err := exifutil.BuildBaseEXIF()
 	if err != nil {
 		t.Fatalf("buildBaseEXIF failed: %v", err)
 	}
@@ -109,7 +116,7 @@ func TestAddTag_Error(t *testing.T) {
 	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
 
 	// An unknown tag name should return an error
-	if err := addTag(ib, "NonExistentTagXYZ_12345", "value"); err == nil {
+	if err := exifutil.AddTag(ib, "NonExistentTagXYZ_12345", "value"); err == nil {
 		t.Errorf("addTag with unknown tag name expected error, got nil")
 	}
 }

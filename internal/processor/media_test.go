@@ -13,6 +13,7 @@ import (
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
+	"github.com/outis/ghost-rizz/internal/exifutil"
 	"github.com/outis/ghost-rizz/internal/generator"
 )
 
@@ -231,11 +232,11 @@ func TestAddTag_Error(t *testing.T) {
 	ti := exif.NewTagIndex()
 	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
 
-	if err := addTag(ib, "ThisTagDoesNotExistXYZ", "value"); err == nil {
+	if err := exifutil.AddTag(ib, "ThisTagDoesNotExistXYZ", "value"); err == nil {
 		t.Errorf("addTag with unknown tag name expected error, got nil")
 	}
 	// Ensure the error wraps the tag name
-	if err := addTag(ib, "ThisTagDoesNotExistXYZ", "value"); err != nil {
+	if err := exifutil.AddTag(ib, "ThisTagDoesNotExistXYZ", "value"); err != nil {
 		if !strings.Contains(fmt.Sprintf("%v", err), "ThisTagDoesNotExistXYZ") {
 			// acceptable: just check non-nil is enough
 			_ = err

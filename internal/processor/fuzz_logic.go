@@ -8,6 +8,7 @@ import (
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
+	"github.com/outis/ghost-rizz/internal/exifutil"
 )
 
 func processSingleImage(inPath, outPath, mode string) error {
@@ -44,14 +45,6 @@ func processSingleImage(inPath, outPath, mode string) error {
 	return mh.Write(outF)
 }
 
-// addTag is a helper that wraps AddStandardWithName and returns a descriptive error.
-func addTag(ib *exif.IfdBuilder, name string, value interface{}) error {
-	if err := ib.AddStandardWithName(name, value); err != nil {
-		return fmt.Errorf("failed to add EXIF tag %q: %w", name, err)
-	}
-	return nil
-}
-
 func createRandomEXIF() (*exif.IfdBuilder, error) {
 	im, err := exifcommon.NewIfdMappingWithStandard()
 	if err != nil {
@@ -67,10 +60,10 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	}
 
 	for _, call := range []func() error{
-		func() error { return addTag(ib, "Make", generateRandomString(10)) },
-		func() error { return addTag(ib, "Model", generateRandomString(12)) },
-		func() error { return addTag(ib, "Software", generateRandomString(15)) },
-		func() error { return addTag(ib, "DateTime", randomDate()) },
+		func() error { return exifutil.AddTag(ib, "Make", generateRandomString(10)) },
+		func() error { return exifutil.AddTag(ib, "Model", generateRandomString(12)) },
+		func() error { return exifutil.AddTag(ib, "Software", generateRandomString(15)) },
+		func() error { return exifutil.AddTag(ib, "DateTime", randomDate()) },
 	} {
 		if err := call(); err != nil {
 			return nil, err
@@ -82,9 +75,9 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 		return nil, err
 	}
 	for _, call := range []func() error{
-		func() error { return addTag(exifIb, "DateTimeOriginal", randomDate()) },
+		func() error { return exifutil.AddTag(exifIb, "DateTimeOriginal", randomDate()) },
 		func() error {
-			return addTag(exifIb, "ExposureTime", []exifcommon.Rational{
+			return exifutil.AddTag(exifIb, "ExposureTime", []exifcommon.Rational{
 				{Numerator: 1, Denominator: uint32(rand.Intn(1000) + 1)},
 			})
 		},
@@ -102,17 +95,17 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	latRefs := []string{"N", "S"}
 	lonRefs := []string{"E", "W"}
 	for _, call := range []func() error{
-		func() error { return addTag(gpsIb, "GPSLatitudeRef", latRefs[rand.Intn(len(latRefs))]) },
+		func() error { return exifutil.AddTag(gpsIb, "GPSLatitudeRef", latRefs[rand.Intn(len(latRefs))]) },
 		func() error {
-			return addTag(gpsIb, "GPSLatitude", []exifcommon.Rational{
+			return exifutil.AddTag(gpsIb, "GPSLatitude", []exifcommon.Rational{
 				{Numerator: uint32(rand.Intn(90)), Denominator: 1},
 				{Numerator: uint32(rand.Intn(60)), Denominator: 1},
 				{Numerator: uint32(rand.Intn(6000)), Denominator: 100},
 			})
 		},
-		func() error { return addTag(gpsIb, "GPSLongitudeRef", lonRefs[rand.Intn(len(lonRefs))]) },
+		func() error { return exifutil.AddTag(gpsIb, "GPSLongitudeRef", lonRefs[rand.Intn(len(lonRefs))]) },
 		func() error {
-			return addTag(gpsIb, "GPSLongitude", []exifcommon.Rational{
+			return exifutil.AddTag(gpsIb, "GPSLongitude", []exifcommon.Rational{
 				{Numerator: uint32(rand.Intn(180)), Denominator: 1},
 				{Numerator: uint32(rand.Intn(60)), Denominator: 1},
 				{Numerator: uint32(rand.Intn(6000)), Denominator: 100},

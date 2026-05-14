@@ -52,6 +52,7 @@ var (
 )
 
 // CheckExifTool verifies if exiftool is available in the system PATH.
+// Results are cached via sync.Once; subsequent PATH changes at runtime will not be reflected.
 func CheckExifTool() error {
 	exifToolOnce.Do(func() {
 		if _, err := exec.LookPath("exiftool"); err != nil {
@@ -140,6 +141,8 @@ func (h *heicHandler) DropExif() error {
 // SetExif for HEIC files records the intent to fuzz.
 // Limitation: It currently ignores the fully populated IfdBuilder
 // and only randomizes Make, Model, and Software tags via exiftool during Write.
+// This divergence from JPEG/PNG (which use the full IfdBuilder) is documented
+// and will be improved in future versions.
 func (h *heicHandler) SetExif(ib *exif.IfdBuilder) error {
 	h.mode = "fuzz"
 	return nil
