@@ -31,7 +31,7 @@ jobs:
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
-        version: v1.61.0
+        version: latest
 
     - name: Run Tests & Enforce Coverage
       run: |

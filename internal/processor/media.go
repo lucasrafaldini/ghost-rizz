@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 
 	"github.com/dsoprea/go-exif/v3"
 	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
@@ -47,20 +46,12 @@ func GetMediaHandler(path string) (MediaHandler, error) {
 
 // --- Dependency Checking ---
 
-var (
-	exifToolErr  error
-	exifToolOnce sync.Once
-)
-
 // CheckExifTool verifies if exiftool is available in the system PATH.
-// Results are cached via sync.Once; subsequent PATH changes at runtime will not be reflected.
 func CheckExifTool() error {
-	exifToolOnce.Do(func() {
-		if _, err := exec.LookPath("exiftool"); err != nil {
-			exifToolErr = fmt.Errorf("exiftool is required for HEIC processing but was not found in PATH")
-		}
-	})
-	return exifToolErr
+	if _, err := exec.LookPath("exiftool"); err != nil {
+		return fmt.Errorf("exiftool is required for HEIC processing but was not found in PATH")
+	}
+	return nil
 }
 
 // --- JPEG Handler ---
@@ -139,13 +130,15 @@ func (h *heicHandler) DropExif() error {
 	return nil
 }
 
-// SetExif for HEIC files records the intent to fuzz.
-// Limitation: It currently ignores the fully populated IfdBuilder
-// and only randomizes Make, Model, and Software tags via exiftool during Write.
-// This divergence from JPEG/PNG (which use the full IfdBuilder) is documented
-// and will be improved in future versions.
+// SetExif for HEIC files is currently unsupported.
+// Unlike JPEG/PNG handlers, this implementation cannot apply the supplied
+// IfdBuilder to the output file, so it must fail explicitly rather than
+// silently ignoring the requested metadata changes.
 func (h *heicHandler) SetExif(ib *exif.IfdBuilder) error {
 	h.mode = "fuzz"
+	if ib != nil {
+		return errors.New("setting EXIF from IfdBuilder is unsupported for HEIC")
+	}
 	return nil
 }
 

@@ -72,8 +72,7 @@ func TestGetMediaHandler(t *testing.T) {
 }
 
 func TestCheckExifTool(t *testing.T) {
-	// CheckExifTool is backed by sync.Once — just call it and validate
-	// the result matches what exec.LookPath reports.
+	// CheckExifTool validates the result matches what exec.LookPath reports.
 	err := CheckExifTool()
 	_, lookErr := exec.LookPath("exiftool")
 	if lookErr == nil && err != nil {
@@ -275,5 +274,32 @@ func TestHeicHandler_RawExif_Error(t *testing.T) {
 	_, err := h.RawExif()
 	if err == nil {
 		t.Errorf("expected error for non-existent file in RawExif")
+	}
+}
+
+func TestHeicHandler_SetExif_Error(t *testing.T) {
+	h, _ := GetMediaHandler("test.heic")
+	// ib is not nil, should return error
+	im, _ := exifcommon.NewIfdMappingWithStandard()
+	ti := exif.NewTagIndex()
+	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
+	
+	err := h.SetExif(ib)
+	if err == nil {
+		t.Errorf("expected error when setting non-nil IfdBuilder for HEIC")
+	}
+	if !strings.Contains(err.Error(), "unsupported for HEIC") {
+		t.Errorf("expected 'unsupported for HEIC' error, got: %v", err)
+	}
+}
+
+func TestHeicHandler_Write_Error_Real(t *testing.T) {
+	tmpDir := t.TempDir()
+	inPath := filepath.Join(tmpDir, "test.heic")
+	_ = os.WriteFile(inPath, []byte("fake"), 0644)
+	h, _ := GetMediaHandler(inPath)
+	err := h.Write(&errorWriter{})
+	if err == nil {
+		t.Errorf("expected error for Write on HEIC")
 	}
 }

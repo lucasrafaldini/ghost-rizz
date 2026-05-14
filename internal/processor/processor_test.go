@@ -26,6 +26,8 @@ func TestIsSupportedFormat(t *testing.T) {
 		{"noext", "test", false},
 		{"empty", "", false},
 		{"dot", ".", false},
+		{"heic_upper", "test.HEIC", true},
+		{"mixed_png", "test.pNg", true},
 		{"upper", "TEST.JPG", true},
 	}
 	for _, tt := range tests {
@@ -152,6 +154,10 @@ func TestProcessImages_MultipleErrors(t *testing.T) {
 	inDir := t.TempDir()
 	outDir := t.TempDir()
 
+	if os.Geteuid() == 0 {
+		t.Skip("skipping test as root user can read files with 0000 permissions")
+	}
+
 	// Create two unreadable files to trigger multiple errors
 	f1 := filepath.Join(inDir, "f1.jpg")
 	f2 := filepath.Join(inDir, "f2.jpg")
@@ -185,4 +191,13 @@ func TestProcessImages_MultiHEIC(t *testing.T) {
 
 	// This should hit the break statement in the HEIC pre-scan
 	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_EmptyDir(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	err := ProcessImages(inDir, outDir, "clean")
+	if err != nil {
+		t.Errorf("expected no error for empty dir, got %v", err)
+	}
 }

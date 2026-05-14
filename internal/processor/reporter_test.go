@@ -161,3 +161,12 @@ func TestGenerateReport_MkdirAllError(t *testing.T) {
 		t.Errorf("expected error when outDir creation fails due to parent being a file")
 	}
 }
+
+func TestGenerateReport_EmptyDir(t *testing.T) {
+	inDir := t.TempDir()
+	outCSV := filepath.Join(t.TempDir(), "empty.csv")
+	err := GenerateReport(inDir, outCSV)
+	if err != nil {
+		t.Errorf("expected no error for empty dir in GenerateReport, got %v", err)
+	}
+}
