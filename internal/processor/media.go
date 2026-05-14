@@ -164,17 +164,18 @@ func (h *heicHandler) Write(w io.Writer) error {
 		return err
 	}
 	tmpName := tmpFile.Name()
-	_ = tmpFile.Close()
-	defer func() { _ = os.Remove(tmpName) }()
+	defer func() { _ = tmpFile.Close(); _ = os.Remove(tmpName) }()
 
-	input, err := os.ReadFile(h.filepath)
+	src, err := os.Open(h.filepath)
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(tmpName, input, 0644)
-	if err != nil {
+	defer src.Close()
+
+	if _, err = io.Copy(tmpFile, src); err != nil {
 		return err
 	}
+	_ = tmpFile.Close() // Close so exiftool can work on it
 
 	var cmd *exec.Cmd
 	switch h.mode {
@@ -186,16 +187,18 @@ func (h *heicHandler) Write(w io.Writer) error {
 
 	if cmd != nil {
 		out, err := cmd.CombinedOutput()
-		if err != nil && !strings.Contains(string(out), "0 image files updated") {
+		if err != nil || strings.Contains(string(out), "0 image files updated") {
 			return fmt.Errorf("exiftool error: %v, output: %s", err, string(out))
 		}
 	}
 
-	b, err := os.ReadFile(tmpName)
+	updated, err := os.Open(tmpName)
 	if err != nil {
 		return err
 	}
-	_, err = w.Write(b)
+	defer updated.Close()
+
+	_, err = io.Copy(w, updated)
 	return err
 }
 

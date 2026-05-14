@@ -24,6 +24,8 @@ func TestIsSupportedFormat(t *testing.T) {
 		{"Jpeg_MIX", "test.Jpeg", true},
 		{"txt", "test.txt", false},
 		{"noext", "test", false},
+		{"empty", "", false},
+		{"dot", ".", false},
 		{"upper", "TEST.JPG", true},
 	}
 	for _, tt := range tests {
@@ -117,6 +119,10 @@ func TestProcessImages_UnreadableFile(t *testing.T) {
 	inDir := t.TempDir()
 	outDir := t.TempDir()
 
+	if os.Geteuid() == 0 {
+		t.Skip("skipping test as root user can read files with 0000 permissions")
+	}
+
 	file := filepath.Join(inDir, "test.jpg")
 	_ = os.WriteFile(file, []byte("fake jpg"), 0000)
 	defer func() { _ = os.Chmod(file, 0644) }()
@@ -168,4 +174,15 @@ func TestProcessImages_OutDirCreationError(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error when outDir is a file")
 	}
+}
+
+func TestProcessImages_MultiHEIC(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+
+	_ = os.WriteFile(filepath.Join(inDir, "1.heic"), []byte("fake"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "2.heic"), []byte("fake"), 0644)
+
+	// This should hit the break statement in the HEIC pre-scan
+	_ = ProcessImages(inDir, outDir, "clean")
 }

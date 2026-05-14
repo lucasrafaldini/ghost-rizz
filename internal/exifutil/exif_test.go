@@ -64,3 +64,4 @@ func TestBuildBaseEXIF(t *testing.T) {
 		}
 	}
 }
+

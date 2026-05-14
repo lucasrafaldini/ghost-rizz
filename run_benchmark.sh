@@ -8,10 +8,30 @@ CLEAN_DIR="output_clean"
 FUZZ_DIR="output_fuzz"
 RESULTS_FILE="benchmark_results.txt"
 
+# Trap errors to provide a clean exit message
+trap 'echo "[-] Benchmark failed! Check $RESULTS_FILE for details."; exit 1' ERR
+
 echo "========================================" > "$RESULTS_FILE"
 echo "Ghost-Rizz Benchmark ($COUNT Images)" >> "$RESULTS_FILE"
 echo "========================================" >> "$RESULTS_FILE"
 echo "" >> "$RESULTS_FILE"
+
+# Function to run and time steps
+run_step() {
+    local label="$1"
+    shift
+    echo "[*] Running $label..."
+    echo "--- $label ---" >> "$RESULTS_FILE"
+    
+    # Use /usr/bin/time for cleaner output if available (especially on macOS/Linux)
+    if [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        /usr/bin/time -p "$@" 2>&1 >/dev/null | grep real | awk '{print $2 " seconds"}' >> "$RESULTS_FILE"
+    else
+        # Fallback to bash built-in time
+        { time "$@"; } 2>> "$RESULTS_FILE"
+    fi
+    echo "" >> "$RESULTS_FILE"
+}
 
 # Clean up previous runs
 echo "[*] Cleaning up old directories..."
@@ -21,39 +41,12 @@ rm -rf "$IN_DIR" "$CLEAN_DIR" "$FUZZ_DIR"
 echo "[*] Building ghost-rizz binary..."
 go build -o ghost-rizz ./cmd/ghost-rizz
 
-# 1. Generate
-echo "[*] Running Generate..."
-echo "--- GENERATE ---" >> "$RESULTS_FILE"
-{ time ./ghost-rizz generate -count "$COUNT" -out "$IN_DIR" ; } 2>> "$RESULTS_FILE"
-echo "" >> "$RESULTS_FILE"
-
-# 2. Clean
-echo "[*] Running Clean..."
-echo "--- CLEAN ---" >> "$RESULTS_FILE"
-{ time ./ghost-rizz fuzz -in "$IN_DIR" -out "$CLEAN_DIR" -mode clean ; } 2>> "$RESULTS_FILE"
-echo "" >> "$RESULTS_FILE"
-
-# 3. Fuzz
-echo "[*] Running Fuzz..."
-echo "--- FUZZ ---" >> "$RESULTS_FILE"
-{ time ./ghost-rizz fuzz -in "$IN_DIR" -out "$FUZZ_DIR" -mode fuzz ; } 2>> "$RESULTS_FILE"
-echo "" >> "$RESULTS_FILE"
-
-# 4. Report Inputs
-echo "[*] Running Report on Inputs..."
-echo "--- REPORT (INPUTS) ---" >> "$RESULTS_FILE"
-{ time ./ghost-rizz report -in "$IN_DIR" ; } 2>> "$RESULTS_FILE"
-echo "" >> "$RESULTS_FILE"
-
-# 5. Report Outputs
-echo "[*] Running Report on Clean Outputs..."
-echo "--- REPORT (CLEAN) ---" >> "$RESULTS_FILE"
-{ time ./ghost-rizz report -in "$CLEAN_DIR" ; } 2>> "$RESULTS_FILE"
-echo "" >> "$RESULTS_FILE"
-
-echo "[*] Running Report on Fuzz Outputs..."
-echo "--- REPORT (FUZZ) ---" >> "$RESULTS_FILE"
-{ time ./ghost-rizz report -in "$FUZZ_DIR" ; } 2>> "$RESULTS_FILE"
-echo "" >> "$RESULTS_FILE"
+# Run benchmark steps
+run_step "GENERATE" ./ghost-rizz generate -count "$COUNT" -out "$IN_DIR"
+run_step "CLEAN" ./ghost-rizz fuzz -in "$IN_DIR" -out "$CLEAN_DIR" -mode clean
+run_step "FUZZ" ./ghost-rizz fuzz -in "$IN_DIR" -out "$FUZZ_DIR" -mode fuzz
+run_step "REPORT (INPUTS)" ./ghost-rizz report -in "$IN_DIR"
+run_step "REPORT (CLEAN)" ./ghost-rizz report -in "$CLEAN_DIR"
+run_step "REPORT (FUZZ)" ./ghost-rizz report -in "$FUZZ_DIR"
 
 echo "[+] Benchmark complete! Results saved to $RESULTS_FILE"
