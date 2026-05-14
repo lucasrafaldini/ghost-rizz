@@ -7,7 +7,7 @@ A massive, highly-concurrent EXIF metadata cleaner and fuzzer written in pure Go
 ### Supported Formats
 - **JPEG** (`.jpg`, `.jpeg`): Native support, extremely fast.
 - **PNG** (`.png`): Native support, extremely fast.
-- **HEIC** (`.heic`, `.heif`): Supported via `exiftool` (Option A architecture). **Requires `exiftool` to be installed on your system.**
+- **HEIC** (`.heic`, `.heif`): Supported via `exiftool` (Option A architecture). **Requires `exiftool` to be installed on your system.** Note: HEIC fuzzing currently only randomizes Make, Model, and Software tags.
 
 ## Benchmark
 
@@ -68,7 +68,7 @@ go tool cover -func=coverage.out
 A **GitHub Actions** workflow (`.github/workflows/ci.yml`) is included and runs on every push and pull request. It enforces:
 1. Native formatting (`gofmt`).
 2. Linting (`golangci-lint`).
-3. Strict code coverage (automatically failing the CI if coverage falls below **90.0%**).
+3. Strict code coverage (automatically failing the CI if coverage falls below **85.0%**).
 
 ## Automation & Benchmarking
 

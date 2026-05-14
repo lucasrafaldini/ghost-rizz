@@ -2,7 +2,9 @@ package processor
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -10,10 +12,22 @@ import (
 	"github.com/dsoprea/go-exif/v3"
 )
 
+// GenerateReport scans a directory for supported images and outputs a CSV report of their EXIF metadata.
 func GenerateReport(inDir, outCSV string) error {
 	files, err := os.ReadDir(inDir)
 	if err != nil {
 		return err
+	}
+
+	for _, file := range files {
+		if !file.IsDir() && isSupportedFormat(file.Name()) {
+			if strings.HasSuffix(strings.ToLower(file.Name()), ".heic") || strings.HasSuffix(strings.ToLower(file.Name()), ".heif") {
+				if _, err := exec.LookPath("exiftool"); err != nil {
+					return fmt.Errorf("exiftool is required for HEIC processing but was not found in PATH")
+				}
+				break
+			}
+		}
 	}
 
 	csvFile, err := os.Create(outCSV)
@@ -89,7 +103,14 @@ func GenerateReport(inDir, outCSV string) error {
 	}()
 
 	for row := range rowCh {
-		_ = writer.Write(row)
+		if err := writer.Write(row); err != nil {
+			return err
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return err
 	}
 
 	return nil

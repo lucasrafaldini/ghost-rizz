@@ -2,6 +2,7 @@ package generator
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -31,7 +32,9 @@ func TestGenerateImages(t *testing.T) {
 }
 
 func TestGenerateImages_DirCreationError(t *testing.T) {
-	err := GenerateImages(1, "/dev/null/invalid_dir")
+	badPath := filepath.Join(t.TempDir(), "file.txt")
+	_ = os.WriteFile(badPath, []byte("x"), 0644)
+	err := GenerateImages(1, filepath.Join(badPath, "invalid_dir"))
 	if err == nil {
 		t.Errorf("expected error when output dir is invalid")
 	}
@@ -39,7 +42,7 @@ func TestGenerateImages_DirCreationError(t *testing.T) {
 
 func TestCreateDummyJPEGWithEXIF_FileError(t *testing.T) {
 	// Trying to write a file to an unwritable path
-	err := createDummyJPEGWithEXIF("/dev/null/invalid.jpg")
+	err := createDummyJPEGWithEXIF(filepath.Join(t.TempDir(), "nonexistent_dir", "invalid.jpg"))
 	if err == nil {
 		t.Errorf("expected error when file path is invalid")
 	}

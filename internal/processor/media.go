@@ -12,6 +12,7 @@ import (
 	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
 )
 
+// MediaHandler defines an interface for parsing and modifying EXIF metadata across different image formats.
 type MediaHandler interface {
 	DropExif() error
 	SetExif(ib *exif.IfdBuilder) error
@@ -19,26 +20,27 @@ type MediaHandler interface {
 	RawExif() ([]byte, error)
 }
 
-func GetMediaHandler(filepath string) (MediaHandler, error) {
-	ext := strings.ToLower(filepath)
-	if strings.HasSuffix(ext, ".jpg") || strings.HasSuffix(ext, ".jpeg") {
+// GetMediaHandler returns a MediaHandler for the given file path based on its extension.
+func GetMediaHandler(path string) (MediaHandler, error) {
+	lower := strings.ToLower(path)
+	if strings.HasSuffix(lower, ".jpg") || strings.HasSuffix(lower, ".jpeg") {
 		jmp := jpegstructure.NewJpegMediaParser()
-		intfc, err := jmp.ParseFile(filepath)
+		intfc, err := jmp.ParseFile(path)
 		if err != nil {
 			return nil, err
 		}
 		return &jpegHandler{sl: intfc.(*jpegstructure.SegmentList)}, nil
-	} else if strings.HasSuffix(ext, ".png") {
+	} else if strings.HasSuffix(lower, ".png") {
 		pmp := pngstructure.NewPngMediaParser()
-		intfc, err := pmp.ParseFile(filepath)
+		intfc, err := pmp.ParseFile(path)
 		if err != nil {
 			return nil, err
 		}
 		return &pngHandler{cs: intfc.(*pngstructure.ChunkSlice)}, nil
-	} else if strings.HasSuffix(ext, ".heic") || strings.HasSuffix(ext, ".heif") {
-		return &heicHandler{filepath: filepath}, nil
+	} else if strings.HasSuffix(lower, ".heic") || strings.HasSuffix(lower, ".heif") {
+		return &heicHandler{filepath: path}, nil
 	}
-	return nil, fmt.Errorf("unsupported file format: %s", filepath)
+	return nil, fmt.Errorf("unsupported file format: %s", path)
 }
 
 // --- JPEG Handler ---
@@ -111,12 +113,19 @@ func (h *heicHandler) DropExif() error {
 	return nil
 }
 
+// SetExif for HEIC files records the intent to fuzz.
+// Limitation: It currently ignores the fully populated IfdBuilder
+// and only randomizes Make, Model, and Software tags via exiftool during Write.
 func (h *heicHandler) SetExif(ib *exif.IfdBuilder) error {
 	h.mode = "fuzz"
 	return nil
 }
 
 func (h *heicHandler) Write(w io.Writer) error {
+	if h.mode == "" {
+		return fmt.Errorf("no mode configured for heicHandler")
+	}
+
 	tmpFile, err := os.CreateTemp("", "ghost-rizz-*.heic")
 	if err != nil {
 		return err
@@ -129,7 +138,10 @@ func (h *heicHandler) Write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	_ = os.WriteFile(tmpName, input, 0644)
+	err = os.WriteFile(tmpName, input, 0644)
+	if err != nil {
+		return err
+	}
 
 	var cmd *exec.Cmd
 	switch h.mode {

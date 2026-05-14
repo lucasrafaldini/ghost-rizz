@@ -53,13 +53,19 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	_ = ib.AddStandardWithName("Make", GenerateRandomString(10))
 	_ = ib.AddStandardWithName("Model", GenerateRandomString(12))
 	_ = ib.AddStandardWithName("Software", GenerateRandomString(15))
-	_ = ib.AddStandardWithName("DateTime", fmt.Sprintf("20%02d:%02d:%02d %02d:%02d:%02d", rand.Intn(30), rand.Intn(12)+1, rand.Intn(28)+1, rand.Intn(24), rand.Intn(60), rand.Intn(60)))
+	_ = ib.AddStandardWithName("DateTime", fmt.Sprintf("%04d:%02d:%02d %02d:%02d:%02d", rand.Intn(130)+1970, rand.Intn(12)+1, rand.Intn(28)+1, rand.Intn(24), rand.Intn(60), rand.Intn(60)))
 
-	exifIb, _ := exif.GetOrCreateIbFromRootIb(ib, "IFD/Exif")
-	_ = exifIb.AddStandardWithName("DateTimeOriginal", fmt.Sprintf("20%02d:%02d:%02d %02d:%02d:%02d", rand.Intn(30), rand.Intn(12)+1, rand.Intn(28)+1, rand.Intn(24), rand.Intn(60), rand.Intn(60)))
+	exifIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/Exif")
+	if err != nil {
+		return nil, err
+	}
+	_ = exifIb.AddStandardWithName("DateTimeOriginal", fmt.Sprintf("%04d:%02d:%02d %02d:%02d:%02d", rand.Intn(130)+1970, rand.Intn(12)+1, rand.Intn(28)+1, rand.Intn(24), rand.Intn(60), rand.Intn(60)))
 	_ = exifIb.AddStandardWithName("ExposureTime", []exifcommon.Rational{{Numerator: 1, Denominator: uint32(rand.Intn(1000) + 1)}})
 
-	gpsIb, _ := exif.GetOrCreateIbFromRootIb(ib, "IFD/GPSInfo")
+	gpsIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/GPSInfo")
+	if err != nil {
+		return nil, err
+	}
 
 	refs := []string{"N", "S"}
 
@@ -73,6 +79,7 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	return ib, nil
 }
 
+// GenerateRandomString creates a random string of length n.
 func GenerateRandomString(n int) string {
 	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 	b := make([]rune, n)

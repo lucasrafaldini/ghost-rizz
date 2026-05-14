@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -18,6 +19,7 @@ import (
 	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
 )
 
+// GenerateImages creates a specified number of procedural images injected with dummy EXIF metadata.
 func GenerateImages(count int, outDir string) error {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
@@ -45,10 +47,12 @@ func GenerateImages(count int, outDir string) error {
 	wg.Wait()
 	close(errCh)
 
+	var errs []error
 	for err := range errCh {
 		fmt.Println(err)
+		errs = append(errs, err)
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 func createDummyJPEGWithEXIF(filename string) error {
@@ -153,11 +157,17 @@ func buildBaseEXIF() (*exif.IfdBuilder, error) {
 	_ = ib.AddStandardWithName("Software", "Ghost-Rizz OS 1.0")
 	_ = ib.AddStandardWithName("DateTime", "2026:05:13 12:00:00")
 
-	exifIb, _ := exif.GetOrCreateIbFromRootIb(ib, "IFD/Exif")
+	exifIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/Exif")
+	if err != nil {
+		return nil, err
+	}
 	_ = exifIb.AddStandardWithName("DateTimeOriginal", "2026:05:13 12:00:00")
 	_ = exifIb.AddStandardWithName("ExposureTime", []exifcommon.Rational{{Numerator: 1, Denominator: 100}})
 
-	gpsIb, _ := exif.GetOrCreateIbFromRootIb(ib, "IFD/GPSInfo")
+	gpsIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/GPSInfo")
+	if err != nil {
+		return nil, err
+	}
 	_ = gpsIb.AddStandardWithName("GPSLatitudeRef", "N")
 	_ = gpsIb.AddStandardWithName("GPSLatitude", []exifcommon.Rational{
 		{Numerator: 40, Denominator: 1}, {Numerator: 45, Denominator: 1}, {Numerator: 0, Denominator: 1},

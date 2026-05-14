@@ -52,14 +52,14 @@ func TestGenerateReport(t *testing.T) {
 }
 
 func TestGenerateReport_InvalidInDir(t *testing.T) {
-	err := GenerateReport("/dev/null/invalid", t.TempDir()+"/report.csv")
+	err := GenerateReport(filepath.Join(t.TempDir(), "nonexistent"), t.TempDir()+"/report.csv")
 	if err == nil {
 		t.Errorf("expected error for invalid input dir")
 	}
 }
 
 func TestGenerateReport_InvalidOutCSV(t *testing.T) {
-	err := GenerateReport(t.TempDir(), "/dev/null/invalid/report.csv")
+	err := GenerateReport(t.TempDir(), filepath.Join(t.TempDir(), "nonexistent", "report.csv"))
 	if err == nil {
 		t.Errorf("expected error for invalid output csv")
 	}
@@ -70,9 +70,21 @@ func TestGenerateReport_NonJpeg(t *testing.T) {
 	badFile := filepath.Join(inDir, "bad.txt")
 	_ = os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
 
-	err := GenerateReport(inDir, filepath.Join(inDir, "report.csv"))
+	outCSV := filepath.Join(inDir, "report.csv")
+	err := GenerateReport(inDir, outCSV)
 	if err != nil {
 		t.Errorf("GenerateReport failed: %v", err)
+	}
+
+	f, err := os.Open(outCSV)
+	if err == nil {
+		defer func() { _ = f.Close() }()
+		records, _ := csv.NewReader(f).ReadAll()
+		if len(records) != 1 {
+			t.Errorf("expected 1 row (header only), got %d", len(records))
+		}
+	} else {
+		t.Errorf("failed to open csv: %v", err)
 	}
 }
 
@@ -81,8 +93,22 @@ func TestGenerateReport_ParseError(t *testing.T) {
 	badFile := filepath.Join(inDir, "bad.jpg")
 	_ = os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
 
-	err := GenerateReport(inDir, filepath.Join(inDir, "report.csv"))
+	outCSV := filepath.Join(inDir, "report.csv")
+	err := GenerateReport(inDir, outCSV)
 	if err != nil {
 		t.Errorf("GenerateReport failed: %v", err)
+	}
+
+	f, err := os.Open(outCSV)
+	if err == nil {
+		defer func() { _ = f.Close() }()
+		records, _ := csv.NewReader(f).ReadAll()
+		if len(records) != 2 {
+			t.Errorf("expected 2 rows, got %d", len(records))
+		} else if records[1][1] != "error" {
+			t.Errorf("expected HasEXIF to be 'error', got %s", records[1][1])
+		}
+	} else {
+		t.Errorf("failed to open csv: %v", err)
 	}
 }

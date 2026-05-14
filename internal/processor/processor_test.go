@@ -38,14 +38,16 @@ func TestProcessImages(t *testing.T) {
 }
 
 func TestProcessImages_InvalidInDir(t *testing.T) {
-	err := ProcessImages("/dev/null/invalid", t.TempDir(), "clean")
+	err := ProcessImages(filepath.Join(t.TempDir(), "nonexistent"), t.TempDir(), "clean")
 	if err == nil {
 		t.Errorf("expected error for invalid input dir")
 	}
 }
 
 func TestProcessImages_InvalidOutDir(t *testing.T) {
-	err := ProcessImages(t.TempDir(), "/dev/null/invalid", "clean")
+	badPath := filepath.Join(t.TempDir(), "file.txt")
+	_ = os.WriteFile(badPath, []byte("x"), 0644)
+	err := ProcessImages(t.TempDir(), filepath.Join(badPath, "invalid_dir"), "clean")
 	if err == nil {
 		t.Errorf("expected error for invalid output dir")
 	}
@@ -59,7 +61,7 @@ func TestProcessImages_ProcessSingleImageError(t *testing.T) {
 	_ = os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
 
 	err := ProcessImages(inDir, outDir, "clean")
-	if err != nil {
-		t.Errorf("ProcessImages returned error: %v", err)
+	if err == nil {
+		t.Errorf("ProcessImages expected error but got nil")
 	}
 }

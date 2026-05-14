@@ -10,6 +10,7 @@ import (
 
 func TestRunCommand(t *testing.T) {
 	tmpDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(tmpDir, "file.txt"), []byte("x"), 0644)
 
 	tests := []struct {
 		name       string
@@ -49,19 +50,19 @@ func TestRunCommand(t *testing.T) {
 		},
 		{
 			name:       "Generate error path",
-			args:       []string{"generate", "-out", "/dev/null/invalid"}, // this will fail on most OSes
+			args:       []string{"generate", "-out", filepath.Join(tmpDir, "file.txt", "invalid")},
 			wantExit:   1,
 			wantOutput: []string{"Error generating images"},
 		},
 		{
 			name:       "Fuzz error path",
-			args:       []string{"fuzz", "-in", "/dev/null/invalid"},
+			args:       []string{"fuzz", "-in", filepath.Join(tmpDir, "nonexistent")},
 			wantExit:   1,
 			wantOutput: []string{"Error processing images"},
 		},
 		{
 			name:       "Report error path",
-			args:       []string{"report", "-in", "/dev/null/invalid"},
+			args:       []string{"report", "-in", filepath.Join(tmpDir, "nonexistent")},
 			wantExit:   1,
 			wantOutput: []string{"Error generating report"},
 		},
@@ -69,33 +70,35 @@ func TestRunCommand(t *testing.T) {
 			name:       "Generate bad flags",
 			args:       []string{"generate", "-unknown_flag"},
 			wantExit:   1,
-			wantOutput: []string{""},
+			wantOutput: []string{"flag provided but not defined"},
 		},
 		{
 			name:       "Fuzz bad flags",
 			args:       []string{"fuzz", "-unknown_flag"},
 			wantExit:   1,
-			wantOutput: []string{""},
+			wantOutput: []string{"flag provided but not defined"},
 		},
 		{
 			name:       "Report bad flags",
 			args:       []string{"report", "-unknown_flag"},
 			wantExit:   1,
-			wantOutput: []string{""},
+			wantOutput: []string{"flag provided but not defined"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
+			var errBuf bytes.Buffer
 			stdout = &buf
+			stderr = &errBuf
 
 			got := run(tt.args)
 
 			if got != tt.wantExit {
 				t.Errorf("run() = %v, want %v", got, tt.wantExit)
 			}
-			outStr := buf.String()
+			outStr := buf.String() + errBuf.String()
 			for _, w := range tt.wantOutput {
 				if w != "" && !strings.Contains(outStr, w) {
 					t.Errorf("run() output %q, want to contain %q", outStr, w)
@@ -105,6 +108,7 @@ func TestRunCommand(t *testing.T) {
 	}
 
 	stdout = os.Stdout
+	stderr = os.Stderr
 }
 
 func TestMainFunc(t *testing.T) {

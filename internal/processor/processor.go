@@ -1,8 +1,10 @@
 package processor
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -13,6 +15,8 @@ func isSupportedFormat(filename string) bool {
 	return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".heic" || ext == ".heif"
 }
 
+// ProcessImages reads supported image files from inDir, processes them using
+// the specified mode, and writes the results to outDir.
 func ProcessImages(inDir, outDir, mode string) error {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
@@ -21,6 +25,17 @@ func ProcessImages(inDir, outDir, mode string) error {
 	files, err := os.ReadDir(inDir)
 	if err != nil {
 		return err
+	}
+
+	for _, file := range files {
+		if !file.IsDir() && isSupportedFormat(file.Name()) {
+			if strings.HasSuffix(strings.ToLower(file.Name()), ".heic") || strings.HasSuffix(strings.ToLower(file.Name()), ".heif") {
+				if _, err := exec.LookPath("exiftool"); err != nil {
+					return fmt.Errorf("exiftool is required for HEIC processing but was not found in PATH")
+				}
+				break
+			}
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -48,8 +63,10 @@ func ProcessImages(inDir, outDir, mode string) error {
 	wg.Wait()
 	close(errCh)
 
+	var errs []error
 	for err := range errCh {
 		fmt.Println(err)
+		errs = append(errs, err)
 	}
-	return nil
+	return errors.Join(errs...)
 }
