@@ -113,4 +113,3 @@ func TestAddTag_Error(t *testing.T) {
 		t.Errorf("addTag with unknown tag name expected error, got nil")
 	}
 }
-

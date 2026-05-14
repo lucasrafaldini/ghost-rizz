@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	exifcommon "github.com/dsoprea/go-exif/v3/common"
 	"github.com/dsoprea/go-exif/v3"
+	exifcommon "github.com/dsoprea/go-exif/v3/common"
 	"github.com/outis/ghost-rizz/internal/generator"
 )
 
@@ -242,4 +242,3 @@ func TestAddTag_Error(t *testing.T) {
 		}
 	}
 }
-
