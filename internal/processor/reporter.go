@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -102,8 +103,17 @@ func GenerateReport(inDir, outCSV string) error {
 		close(rowCh)
 	}()
 
-	var writeErr error
+	var rows [][]string
 	for row := range rowCh {
+		rows = append(rows, row)
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i][0] < rows[j][0]
+	})
+
+	var writeErr error
+	for _, row := range rows {
 		if writeErr == nil {
 			if err := writer.Write(row); err != nil {
 				writeErr = err

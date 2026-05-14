@@ -26,6 +26,7 @@ func TestIsSupportedFormat(t *testing.T) {
 		{"Jpeg_MIX", "test.Jpeg", true},
 		{"txt", "test.txt", false},
 		{"noext", "test", false},
+		{"no_ext", "test", false},
 		{"empty", "", false},
 		{"dot", ".", false},
 		{"heic_upper", "test.HEIC", true},

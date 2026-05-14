@@ -3,7 +3,7 @@ package processor
 import (
 	"errors"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"strings"
 	"time"
@@ -62,16 +62,17 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
 
 	randomDate := func() string {
-		year := rand.Intn(130) + 1970
-		month := rand.Intn(12) + 1
-		// Use time.Date to find the last day of the month
+		year := rand.IntN(130) + 1970
+		month := rand.IntN(12) + 1
+		// Day 0 of the following month resolves to the last day of the selected month.
+		// For example, Jan 32 -> Feb 1, so Feb 0 -> Jan 31.
 		t := time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, time.UTC)
 		maxDays := t.Day()
-		day := rand.Intn(maxDays) + 1
+		day := rand.IntN(maxDays) + 1
 
 		return fmt.Sprintf("%04d:%02d:%02d %02d:%02d:%02d",
 			year, month, day,
-			rand.Intn(24), rand.Intn(60), rand.Intn(60))
+			rand.IntN(24), rand.IntN(60), rand.IntN(60))
 	}
 
 	for _, call := range []func() error{
@@ -93,7 +94,7 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 		func() error { return exifutil.AddTag(exifIb, "DateTimeOriginal", randomDate()) },
 		func() error {
 			return exifutil.AddTag(exifIb, "ExposureTime", []exifcommon.Rational{
-				{Numerator: 1, Denominator: uint32(rand.Intn(1000) + 1)},
+				{Numerator: 1, Denominator: uint32(rand.IntN(1000) + 1)},
 			})
 		},
 	} {
@@ -110,20 +111,20 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	latRefs := []string{"N", "S"}
 	lonRefs := []string{"E", "W"}
 	for _, call := range []func() error{
-		func() error { return exifutil.AddTag(gpsIb, "GPSLatitudeRef", latRefs[rand.Intn(len(latRefs))]) },
+		func() error { return exifutil.AddTag(gpsIb, "GPSLatitudeRef", latRefs[rand.IntN(len(latRefs))]) },
 		func() error {
 			return exifutil.AddTag(gpsIb, "GPSLatitude", []exifcommon.Rational{
-				{Numerator: uint32(rand.Intn(90)), Denominator: 1},
-				{Numerator: uint32(rand.Intn(60)), Denominator: 1},
-				{Numerator: uint32(rand.Intn(6000)), Denominator: 100},
+				{Numerator: uint32(rand.IntN(90)), Denominator: 1},
+				{Numerator: uint32(rand.IntN(60)), Denominator: 1},
+				{Numerator: uint32(rand.IntN(6000)), Denominator: 100},
 			})
 		},
-		func() error { return exifutil.AddTag(gpsIb, "GPSLongitudeRef", lonRefs[rand.Intn(len(lonRefs))]) },
+		func() error { return exifutil.AddTag(gpsIb, "GPSLongitudeRef", lonRefs[rand.IntN(len(lonRefs))]) },
 		func() error {
 			return exifutil.AddTag(gpsIb, "GPSLongitude", []exifcommon.Rational{
-				{Numerator: uint32(rand.Intn(180)), Denominator: 1},
-				{Numerator: uint32(rand.Intn(60)), Denominator: 1},
-				{Numerator: uint32(rand.Intn(6000)), Denominator: 100},
+				{Numerator: uint32(rand.IntN(180)), Denominator: 1},
+				{Numerator: uint32(rand.IntN(60)), Denominator: 1},
+				{Numerator: uint32(rand.IntN(6000)), Denominator: 100},
 			})
 		},
 	} {
@@ -140,7 +141,7 @@ func generateRandomString(n int) string {
 	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+		b[i] = letters[rand.IntN(len(letters))]
 	}
 	return string(b)
 }

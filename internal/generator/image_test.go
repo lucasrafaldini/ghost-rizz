@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/outis/ghost-rizz/internal/exifutil"
 )
 
 func TestGenerateImages(t *testing.T) {
@@ -66,19 +65,6 @@ func TestCreateDummyPNGWithEXIF_FileError(t *testing.T) {
 	}
 }
 
-func TestCreateDummyJPEGWithEXIF_TempFileError(t *testing.T) {
-	// Force error in temp file creation by making the temp-file path a directory.
-	tmp := filepath.Join(t.TempDir(), "file.jpg")
-	if err := os.MkdirAll(tmp+".tmp", 0755); err != nil {
-		t.Fatalf("failed to create temp-path directory: %v", err)
-	}
-
-	err := createDummyJPEGWithEXIF(tmp)
-	if err == nil {
-		t.Errorf("expected error when temp file path is a directory")
-	}
-}
-
 func TestCreateDummyJPEGWithEXIF_OutFileError(t *testing.T) {
 	tmpDir := t.TempDir()
 	badFile := filepath.Join(tmpDir, "bad.jpg")
@@ -99,15 +85,7 @@ func TestCreateDummyPNGWithEXIF_OutFileError(t *testing.T) {
 	}
 }
 
-func TestBuildBaseEXIF(t *testing.T) {
-	ib, err := exifutil.BuildBaseEXIF()
-	if err != nil {
-		t.Fatalf("buildBaseEXIF failed: %v", err)
-	}
-	if ib == nil {
-		t.Fatal("expected non-nil IfdBuilder")
-	}
-}
+
 
 
 

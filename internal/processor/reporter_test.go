@@ -187,3 +187,13 @@ func TestGenerateReport_EmptyDir(t *testing.T) {
 		t.Errorf("expected no error for empty dir in GenerateReport, got %v", err)
 	}
 }
+
+func TestGenerateReport_NoExt(t *testing.T) {
+	inDir := t.TempDir()
+	outCSV := filepath.Join(t.TempDir(), "noext.csv")
+	_ = os.WriteFile(filepath.Join(inDir, "noext"), []byte("x"), 0644)
+	err := GenerateReport(inDir, outCSV)
+	if err != nil {
+		t.Errorf("expected no error for file with no extension, got %v", err)
+	}
+}

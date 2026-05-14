@@ -1,18 +1,16 @@
 package generator
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/jpeg"
 	"image/png"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
-	"runtime"
-	"sync"
 
 	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
 	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
@@ -21,64 +19,41 @@ import (
 
 // GenerateImages creates a specified number of procedural images injected with dummy EXIF metadata.
 func GenerateImages(count int, outDir string) error {
+	if count <= 0 {
+		return nil
+	}
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
-	var wg sync.WaitGroup
-	errCh := make(chan error, count)
-
-	workers := runtime.GOMAXPROCS(0)
-	sem := make(chan struct{}, workers)
 
 	for i := 0; i < count; i++ {
-		sem <- struct{}{}
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			var err error
-			filename := filepath.Join(outDir, fmt.Sprintf("dummy_%04d", index))
-			if index%2 == 0 {
-				err = createDummyJPEGWithEXIF(filename + ".jpg")
-			} else {
-				err = createDummyPNGWithEXIF(filename + ".png")
+		filename := filepath.Join(outDir, fmt.Sprintf("dummy_%04d", i))
+		if i%2 == 0 {
+			if err := createDummyJPEGWithEXIF(filename + ".jpg"); err != nil {
+				return err
 			}
-			if err != nil {
-				errCh <- fmt.Errorf("failed to create image %d: %w", index, err)
+		} else {
+			if err := createDummyPNGWithEXIF(filename + ".png"); err != nil {
+				return err
 			}
-		}(i)
+		}
 	}
-
-	wg.Wait()
-	close(errCh)
-
-	var errs []error
-	for err := range errCh {
-		errs = append(errs, err)
-	}
-	return errors.Join(errs...)
+	return nil
 }
 
 func createDummyJPEGWithEXIF(filename string) error {
 	width, height := 800, 600
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	col := color.RGBA{uint8(rand.Intn(256)), uint8(rand.Intn(256)), uint8(rand.Intn(256)), 255}
+	col := color.RGBA{uint8(rand.IntN(256)), uint8(rand.IntN(256)), uint8(rand.IntN(256)), 255}
 	draw.Draw(img, img.Bounds(), &image.Uniform{col}, image.Point{}, draw.Src)
 
-	tempFile := filename + ".tmp"
-	f, err := os.Create(tempFile)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 80}); err != nil {
 		return err
 	}
-	if err := jpeg.Encode(f, img, &jpeg.Options{Quality: 80}); err != nil {
-		_ = f.Close()
-		return err
-	}
-	_ = f.Close()
-	defer func() { _ = os.Remove(tempFile) }()
 
 	jmp := jpegstructure.NewJpegMediaParser()
-	intfc, err := jmp.ParseFile(tempFile)
+	intfc, err := jmp.ParseBytes(buf.Bytes())
 	if err != nil {
 		return err
 	}
@@ -105,22 +80,15 @@ func createDummyJPEGWithEXIF(filename string) error {
 
 func createDummyPNGWithEXIF(filename string) error {
 	img := image.NewRGBA(image.Rect(0, 0, 100, 100))
-	draw.Draw(img, img.Bounds(), &image.Uniform{color.RGBA{uint8(rand.Intn(256)), uint8(rand.Intn(256)), uint8(rand.Intn(256)), 255}}, image.Point{}, draw.Src)
+	draw.Draw(img, img.Bounds(), &image.Uniform{color.RGBA{uint8(rand.IntN(256)), uint8(rand.IntN(256)), uint8(rand.IntN(256)), 255}}, image.Point{}, draw.Src)
 
-	tempFile := filename + ".tmp.png"
-	f, err := os.Create(tempFile)
-	if err != nil {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
 		return err
 	}
-	if err := png.Encode(f, img); err != nil {
-		_ = f.Close()
-		return err
-	}
-	_ = f.Close()
-	defer func() { _ = os.Remove(tempFile) }()
 
 	pmp := pngstructure.NewPngMediaParser()
-	intfc, err := pmp.ParseFile(tempFile)
+	intfc, err := pmp.ParseBytes(buf.Bytes())
 	if err != nil {
 		return err
 	}
