@@ -18,6 +18,12 @@ func isSupportedFormat(filename string) bool {
 // ProcessImages reads supported image files from inDir, processes them using
 // the specified mode, and writes the results to outDir.
 func ProcessImages(inDir, outDir, mode string) error {
+	absIn, _ := filepath.Abs(inDir)
+	absOut, _ := filepath.Abs(outDir)
+	if absIn == absOut {
+		return errors.New("input and output directories must be different")
+	}
+
 	files, err := os.ReadDir(inDir)
 	if err != nil {
 		return err

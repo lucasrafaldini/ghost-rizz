@@ -18,17 +18,6 @@ func GenerateReport(inDir, outCSV string) error {
 		return err
 	}
 
-	for _, file := range files {
-		if !file.IsDir() && isSupportedFormat(file.Name()) {
-			if strings.HasSuffix(strings.ToLower(file.Name()), ".heic") || strings.HasSuffix(strings.ToLower(file.Name()), ".heif") {
-				if err := CheckExifTool(); err != nil {
-					return err
-				}
-				break
-			}
-		}
-	}
-
 	csvFile, err := os.Create(outCSV)
 	if err != nil {
 		return err
@@ -37,7 +26,7 @@ func GenerateReport(inDir, outCSV string) error {
 
 	writer := csv.NewWriter(csvFile)
 
-	header := []string{"Filename", "HasEXIF", "Make", "Model", "Software", "DateTime", "DateTimeOriginal", "ExposureTime", "GPSLatitude"}
+	header := []string{"Filename", "HasEXIF", "Make", "Model", "Software", "DateTime", "DateTimeOriginal", "ExposureTime", "GPSLatitude", "Error"}
 	if err := writer.Write(header); err != nil {
 		return err
 	}
@@ -56,11 +45,21 @@ func GenerateReport(inDir, outCSV string) error {
 		wg.Add(1)
 		go func(path, name string) {
 			defer wg.Done()
-			row := []string{name, "false", "", "", "", "", "", "", ""}
+			row := []string{name, "false", "", "", "", "", "", "", "", ""}
+
+			if strings.HasSuffix(strings.ToLower(name), ".heic") || strings.HasSuffix(strings.ToLower(name), ".heif") {
+				if err := CheckExifTool(); err != nil {
+					row[1] = "error"
+					row[9] = err.Error()
+					rowCh <- row
+					return
+				}
+			}
 
 			mh, err := GetMediaHandler(path)
 			if err != nil {
 				row[1] = "error"
+				row[9] = err.Error()
 				rowCh <- row
 				return
 			}
@@ -69,6 +68,7 @@ func GenerateReport(inDir, outCSV string) error {
 			if err != nil {
 				if !strings.Contains(err.Error(), "no exif data") {
 					row[1] = "error"
+					row[9] = err.Error()
 				}
 				rowCh <- row
 				return

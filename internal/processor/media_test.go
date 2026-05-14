@@ -13,7 +13,6 @@ import (
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
-	"github.com/outis/ghost-rizz/internal/exifutil"
 	"github.com/outis/ghost-rizz/internal/generator"
 )
 
@@ -225,23 +224,7 @@ func TestHeicHandler_RawExif_MissingFile(t *testing.T) {
 	}
 }
 
-func TestAddTag_Error(t *testing.T) {
-	// Construct a real IfdBuilder and pass an unknown tag name to trigger error.
-	im, _ := exifcommon.NewIfdMappingWithStandard()
-	ti := exif.NewTagIndex()
-	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
 
-	if err := exifutil.AddTag(ib, "ThisTagDoesNotExistXYZ", "value"); err == nil {
-		t.Errorf("addTag with unknown tag name expected error, got nil")
-	}
-	// Ensure the error wraps the tag name
-	err := exifutil.AddTag(ib, "ThisTagDoesNotExistXYZ", "value")
-	if err == nil {
-		t.Errorf("expected error, got nil")
-	} else if !strings.Contains(err.Error(), "ThisTagDoesNotExistXYZ") {
-		t.Errorf("expected error to contain tag name, got: %v", err)
-	}
-}
 
 type errorWriter struct{}
 

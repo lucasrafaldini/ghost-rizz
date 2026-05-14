@@ -3,6 +3,7 @@ package processor
 import (
 	"encoding/csv"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -127,8 +128,24 @@ func TestGenerateReport_HEIC(t *testing.T) {
 	heicFile := filepath.Join(inDir, "test.heic")
 	_ = os.WriteFile(heicFile, []byte("fake heic"), 0644)
 
-	// GenerateReport should call CheckExifTool.
-	_ = GenerateReport(inDir, outCSV)
+	_, lookErr := exec.LookPath("exiftool")
+	err := GenerateReport(inDir, outCSV)
+
+	if lookErr != nil {
+		// Since we process files concurrently, GenerateReport doesn't return error
+		// from CheckExifTool immediately but records it in the CSV row.
+		// Let's verify the CSV contains 'error'.
+		f, _ := os.Open(outCSV)
+		if f != nil {
+			defer f.Close()
+			records, _ := csv.NewReader(f).ReadAll()
+			if len(records) > 1 && records[1][1] != "error" {
+				t.Errorf("expected HEIC row to have error when exiftool is missing")
+			}
+		}
+	} else if err != nil {
+		t.Errorf("GenerateReport failed with HEIC even though exiftool is present: %v", err)
+	}
 }
 
 func TestGenerateReport_MkdirError(t *testing.T) {

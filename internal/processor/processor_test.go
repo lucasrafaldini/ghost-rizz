@@ -2,7 +2,9 @@ package processor
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/outis/ghost-rizz/internal/generator"
@@ -111,10 +113,15 @@ func TestProcessImages_HEIC(t *testing.T) {
 	heicFile := filepath.Join(inDir, "test.heic")
 	_ = os.WriteFile(heicFile, []byte("fake heic"), 0644)
 
-	// ProcessImages should call CheckExifTool.
-	// If exiftool is absent, it returns an error. If present, it continues.
-	// Either way, it hits the branches.
-	_ = ProcessImages(inDir, outDir, "clean")
+	_, lookErr := exec.LookPath("exiftool")
+	err := ProcessImages(inDir, outDir, "clean")
+
+	if lookErr != nil && err == nil {
+		t.Errorf("expected error when processing HEIC without exiftool")
+	}
+	if lookErr == nil && err != nil {
+		t.Errorf("unexpected error processing HEIC with exiftool: %v", err)
+	}
 }
 
 func TestProcessImages_UnreadableFile(t *testing.T) {
@@ -199,5 +206,16 @@ func TestProcessImages_EmptyDir(t *testing.T) {
 	err := ProcessImages(inDir, outDir, "clean")
 	if err != nil {
 		t.Errorf("expected no error for empty dir, got %v", err)
+	}
+}
+
+func TestProcessImages_SameDirError(t *testing.T) {
+	dir := t.TempDir()
+	err := ProcessImages(dir, dir, "clean")
+	if err == nil {
+		t.Errorf("expected error when inDir == outDir")
+	}
+	if !strings.Contains(err.Error(), "must be different") {
+		t.Errorf("expected 'must be different' error, got: %v", err)
 	}
 }

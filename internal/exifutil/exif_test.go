@@ -1,6 +1,7 @@
 package exifutil
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/dsoprea/go-exif/v3"
@@ -18,8 +19,11 @@ func TestAddTag(t *testing.T) {
 	}
 
 	// Test invalid tag
-	if err := AddTag(ib, "InvalidTagXYZ", "value"); err == nil {
+	err := AddTag(ib, "InvalidTagXYZ", "value")
+	if err == nil {
 		t.Errorf("AddTag(InvalidTagXYZ) expected error, got nil")
+	} else if !strings.Contains(err.Error(), "InvalidTagXYZ") {
+		t.Errorf("expected error to contain tag name, got: %v", err)
 	}
 }
 
