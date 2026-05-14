@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func TestGenerateRandomString(t *testing.T) {
-	str := GenerateRandomString(10)
+	str := generateRandomString(10)
 	if len(str) != 10 {
 		t.Errorf("expected length 10, got %d", len(str))
 	}
@@ -17,28 +18,31 @@ func TestGenerateRandomString(t *testing.T) {
 func TestProcessSingleImage(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	err := generator.GenerateImages(1, tmpDir)
-	if err != nil {
+	if err := generator.GenerateImages(1, tmpDir); err != nil {
 		t.Fatalf("failed to generate image: %v", err)
 	}
 
-	inPath := filepath.Join(tmpDir, "dummy_0000.jpg")
-	outPathClean := filepath.Join(tmpDir, "dummy_0000_clean.jpg")
-	outPathFuzz := filepath.Join(tmpDir, "dummy_0000_fuzz.jpg")
+	// Discover the generated file dynamically to avoid relying on name conventions.
+	entries, err := os.ReadDir(tmpDir)
+	if err != nil || len(entries) == 0 {
+		t.Fatalf("no files generated in tmpDir")
+	}
+	inPath := filepath.Join(tmpDir, entries[0].Name())
+	ext := filepath.Ext(entries[0].Name())
 
-	err = processSingleImage(inPath, outPathClean, "clean")
-	if err != nil {
+	outPathClean := filepath.Join(tmpDir, "out_clean"+ext)
+	outPathFuzz := filepath.Join(tmpDir, "out_fuzz"+ext)
+
+	if err := processSingleImage(inPath, outPathClean, "clean"); err != nil {
 		t.Fatalf("processSingleImage clean failed: %v", err)
 	}
 
-	outPathClean2 := filepath.Join(tmpDir, "dummy_0000_clean2.jpg")
-	err = processSingleImage(outPathClean, outPathClean2, "clean")
-	if err != nil {
+	outPathClean2 := filepath.Join(tmpDir, "out_clean2"+ext)
+	if err := processSingleImage(outPathClean, outPathClean2, "clean"); err != nil {
 		t.Fatalf("processSingleImage clean on already clean image failed: %v", err)
 	}
 
-	err = processSingleImage(inPath, outPathFuzz, "fuzz")
-	if err != nil {
+	if err := processSingleImage(inPath, outPathFuzz, "fuzz"); err != nil {
 		t.Fatalf("processSingleImage fuzz failed: %v", err)
 	}
 }
@@ -52,11 +56,16 @@ func TestProcessSingleImage_ParseError(t *testing.T) {
 
 func TestProcessSingleImage_WriteError(t *testing.T) {
 	tmpDir := t.TempDir()
-	_ = generator.GenerateImages(1, tmpDir)
-	inPath := filepath.Join(tmpDir, "dummy_0000.jpg")
+	if err := generator.GenerateImages(1, tmpDir); err != nil {
+		t.Fatalf("failed to generate image: %v", err)
+	}
+	entries, err := os.ReadDir(tmpDir)
+	if err != nil || len(entries) == 0 {
+		t.Fatalf("no files generated")
+	}
+	inPath := filepath.Join(tmpDir, entries[0].Name())
 
-	err := processSingleImage(inPath, "/dev/null/cannot_write.jpg", "clean")
-	if err == nil {
+	if err := processSingleImage(inPath, "/dev/null/cannot_write"+filepath.Ext(entries[0].Name()), "clean"); err == nil {
 		t.Errorf("expected error when output path is invalid")
 	}
 }

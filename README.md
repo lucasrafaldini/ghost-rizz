@@ -45,14 +45,18 @@ go run ./cmd/ghost-rizz fuzz -in ./input_photos -out ./output_photos -mode clean
 ```
 
 ### 3. Report
-Scans an entire directory concurrently and generates a highly detailed CSV file (`report.csv`) directly inside that directory, extracting all relevant EXIF tags for auditing "before-and-after" states.
+Scans an entire directory concurrently and generates a highly detailed CSV file (`report.csv`) extracting all relevant EXIF tags for auditing "before-and-after" states.
 ```bash
+# Write report.csv into the same directory being scanned
 go run ./cmd/ghost-rizz report -in ./output_photos
+
+# Or write report.csv to a different directory with -out
+go run ./cmd/ghost-rizz report -in ./output_photos -out ./reports
 ```
 
 ## Testing & Coverage
 
-This project features a comprehensive unit testing suite achieving **93.1%+ coverage**, heavily testing goroutine synchronization, parsing logic, and the command-line interface.
+This project features a comprehensive unit testing suite achieving **85.0%+ coverage**, heavily testing goroutine synchronization, parsing logic, and the command-line interface.
 
 To run the tests locally:
 ```bash

@@ -2,9 +2,7 @@ package processor
 
 import (
 	"encoding/csv"
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -22,8 +20,8 @@ func GenerateReport(inDir, outCSV string) error {
 	for _, file := range files {
 		if !file.IsDir() && isSupportedFormat(file.Name()) {
 			if strings.HasSuffix(strings.ToLower(file.Name()), ".heic") || strings.HasSuffix(strings.ToLower(file.Name()), ".heif") {
-				if _, err := exec.LookPath("exiftool"); err != nil {
-					return fmt.Errorf("exiftool is required for HEIC processing but was not found in PATH")
+				if err := CheckExifTool(); err != nil {
+					return err
 				}
 				break
 			}
@@ -37,7 +35,6 @@ func GenerateReport(inDir, outCSV string) error {
 	defer func() { _ = csvFile.Close() }()
 
 	writer := csv.NewWriter(csvFile)
-	defer writer.Flush()
 
 	header := []string{"Filename", "HasEXIF", "Make", "Model", "Software", "DateTime", "DateTimeOriginal", "ExposureTime", "GPSLatitude"}
 	if err := writer.Write(header); err != nil {
@@ -102,10 +99,17 @@ func GenerateReport(inDir, outCSV string) error {
 		close(rowCh)
 	}()
 
+	var writeErr error
 	for row := range rowCh {
-		if err := writer.Write(row); err != nil {
-			return err
+		if writeErr == nil {
+			if err := writer.Write(row); err != nil {
+				writeErr = err
+				// drain remaining rows so the closer goroutine can finish
+			}
 		}
+	}
+	if writeErr != nil {
+		return writeErr
 	}
 
 	writer.Flush()

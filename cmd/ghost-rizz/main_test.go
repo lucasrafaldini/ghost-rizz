@@ -92,6 +92,10 @@ func TestRunCommand(t *testing.T) {
 			var errBuf bytes.Buffer
 			stdout = &buf
 			stderr = &errBuf
+			t.Cleanup(func() {
+				stdout = os.Stdout
+				stderr = os.Stderr
+			})
 
 			got := run(tt.args)
 
@@ -106,9 +110,6 @@ func TestRunCommand(t *testing.T) {
 			}
 		})
 	}
-
-	stdout = os.Stdout
-	stderr = os.Stderr
 }
 
 func TestMainFunc(t *testing.T) {

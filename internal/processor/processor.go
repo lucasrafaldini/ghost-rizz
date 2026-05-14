@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -18,20 +18,20 @@ func isSupportedFormat(filename string) bool {
 // ProcessImages reads supported image files from inDir, processes them using
 // the specified mode, and writes the results to outDir.
 func ProcessImages(inDir, outDir, mode string) error {
-	if err := os.MkdirAll(outDir, 0755); err != nil {
+	files, err := os.ReadDir(inDir)
+	if err != nil {
 		return err
 	}
 
-	files, err := os.ReadDir(inDir)
-	if err != nil {
+	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
 
 	for _, file := range files {
 		if !file.IsDir() && isSupportedFormat(file.Name()) {
 			if strings.HasSuffix(strings.ToLower(file.Name()), ".heic") || strings.HasSuffix(strings.ToLower(file.Name()), ".heif") {
-				if _, err := exec.LookPath("exiftool"); err != nil {
-					return fmt.Errorf("exiftool is required for HEIC processing but was not found in PATH")
+				if err := CheckExifTool(); err != nil {
+					return err
 				}
 				break
 			}
@@ -40,6 +40,9 @@ func ProcessImages(inDir, outDir, mode string) error {
 
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(files))
+
+	workers := runtime.GOMAXPROCS(0)
+	sem := make(chan struct{}, workers)
 
 	for _, file := range files {
 		if file.IsDir() || !isSupportedFormat(file.Name()) {
@@ -51,9 +54,11 @@ func ProcessImages(inDir, outDir, mode string) error {
 		base := strings.TrimSuffix(file.Name(), ext)
 		outPath := filepath.Join(outDir, fmt.Sprintf("%s_%s%s", base, mode, ext))
 
+		sem <- struct{}{}
 		wg.Add(1)
 		go func(in, out string) {
 			defer wg.Done()
+			defer func() { <-sem }()
 			if err := processSingleImage(in, out, mode); err != nil {
 				errCh <- fmt.Errorf("failed to process %s: %w", in, err)
 			}
@@ -65,7 +70,6 @@ func ProcessImages(inDir, outDir, mode string) error {
 
 	var errs []error
 	for err := range errCh {
-		fmt.Println(err)
 		errs = append(errs, err)
 	}
 	return errors.Join(errs...)

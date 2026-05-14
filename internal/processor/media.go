@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 
 	"github.com/dsoprea/go-exif/v3"
 	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
@@ -43,6 +44,23 @@ func GetMediaHandler(path string) (MediaHandler, error) {
 	return nil, fmt.Errorf("unsupported file format: %s", path)
 }
 
+// --- Dependency Checking ---
+
+var (
+	exifToolErr  error
+	exifToolOnce sync.Once
+)
+
+// CheckExifTool verifies if exiftool is available in the system PATH.
+func CheckExifTool() error {
+	exifToolOnce.Do(func() {
+		if _, err := exec.LookPath("exiftool"); err != nil {
+			exifToolErr = fmt.Errorf("exiftool is required for HEIC processing but was not found in PATH")
+		}
+	})
+	return exifToolErr
+}
+
 // --- JPEG Handler ---
 
 type jpegHandler struct {
@@ -75,7 +93,13 @@ type pngHandler struct {
 
 func (h *pngHandler) DropExif() error {
 	exifChunk, err := h.cs.FindExif()
-	if err == nil && exifChunk != nil {
+	if err != nil {
+		if err == exif.ErrNoExif || strings.Contains(strings.ToLower(err.Error()), "no exif") {
+			return nil
+		}
+		return err
+	}
+	if exifChunk != nil {
 		chunks := h.cs.Chunks()
 		newChunks := make([]*pngstructure.Chunk, 0, len(chunks)-1)
 		for _, c := range chunks {
@@ -123,7 +147,12 @@ func (h *heicHandler) SetExif(ib *exif.IfdBuilder) error {
 
 func (h *heicHandler) Write(w io.Writer) error {
 	if h.mode == "" {
-		return fmt.Errorf("no mode configured for heicHandler")
+		input, err := os.ReadFile(h.filepath)
+		if err != nil {
+			return err
+		}
+		_, err = w.Write(input)
+		return err
 	}
 
 	tmpFile, err := os.CreateTemp("", "ghost-rizz-*.heic")
@@ -146,9 +175,9 @@ func (h *heicHandler) Write(w io.Writer) error {
 	var cmd *exec.Cmd
 	switch h.mode {
 	case "clean":
-		cmd = exec.Command("exiftool", "-all=", "-overwrite_original", tmpName)
+		cmd = exec.Command("exiftool", "-all=", "-overwrite_original", "--", tmpName)
 	case "fuzz":
-		cmd = exec.Command("exiftool", "-all=", "-overwrite_original", "-Make="+GenerateRandomString(10), "-Model="+GenerateRandomString(12), "-Software="+GenerateRandomString(15), tmpName)
+		cmd = exec.Command("exiftool", "-all=", "-overwrite_original", "-Make="+generateRandomString(10), "-Model="+generateRandomString(12), "-Software="+generateRandomString(15), "--", tmpName)
 	}
 
 	if cmd != nil {

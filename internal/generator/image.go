@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 
 	"github.com/dsoprea/go-exif/v3"
@@ -27,10 +28,15 @@ func GenerateImages(count int, outDir string) error {
 	var wg sync.WaitGroup
 	errCh := make(chan error, count)
 
+	workers := runtime.GOMAXPROCS(0)
+	sem := make(chan struct{}, workers)
+
 	for i := 0; i < count; i++ {
+		sem <- struct{}{}
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
+			defer func() { <-sem }()
 			var err error
 			filename := filepath.Join(outDir, fmt.Sprintf("dummy_%04d", index))
 			if index%2 == 0 {
@@ -49,7 +55,6 @@ func GenerateImages(count int, outDir string) error {
 
 	var errs []error
 	for err := range errCh {
-		fmt.Println(err)
 		errs = append(errs, err)
 	}
 	return errors.Join(errs...)
@@ -58,7 +63,7 @@ func GenerateImages(count int, outDir string) error {
 func createDummyJPEGWithEXIF(filename string) error {
 	width, height := 800, 600
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	col := color.RGBA{uint8(rand.Intn(255)), uint8(rand.Intn(255)), uint8(rand.Intn(255)), 255}
+	col := color.RGBA{uint8(rand.Intn(256)), uint8(rand.Intn(256)), uint8(rand.Intn(256)), 255}
 	draw.Draw(img, img.Bounds(), &image.Uniform{col}, image.Point{}, draw.Src)
 
 	tempFile := filename + ".tmp"
@@ -101,7 +106,7 @@ func createDummyJPEGWithEXIF(filename string) error {
 
 func createDummyPNGWithEXIF(filename string) error {
 	img := image.NewRGBA(image.Rect(0, 0, 100, 100))
-	draw.Draw(img, img.Bounds(), &image.Uniform{color.RGBA{uint8(rand.Intn(255)), uint8(rand.Intn(255)), uint8(rand.Intn(255)), 255}}, image.Point{}, draw.Src)
+	draw.Draw(img, img.Bounds(), &image.Uniform{color.RGBA{uint8(rand.Intn(256)), uint8(rand.Intn(256)), uint8(rand.Intn(256)), 255}}, image.Point{}, draw.Src)
 
 	tempFile := filename + ".tmp.png"
 	f, err := os.Create(tempFile)
@@ -141,6 +146,13 @@ func createDummyPNGWithEXIF(filename string) error {
 	return cs.WriteTo(outF)
 }
 
+func addTag(ib *exif.IfdBuilder, name string, value interface{}) error {
+	if err := ib.AddStandardWithName(name, value); err != nil {
+		return fmt.Errorf("failed to add EXIF tag %q: %w", name, err)
+	}
+	return nil
+}
+
 func buildBaseEXIF() (*exif.IfdBuilder, error) {
 	im, err := exifcommon.NewIfdMappingWithStandard()
 	if err != nil {
@@ -150,28 +162,50 @@ func buildBaseEXIF() (*exif.IfdBuilder, error) {
 
 	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
 
-	_ = ib.AddStandardWithName("ImageWidth", []uint32{800})
-	_ = ib.AddStandardWithName("ImageLength", []uint32{600})
-	_ = ib.AddStandardWithName("Make", "Ghost-Rizz Generator")
-	_ = ib.AddStandardWithName("Model", "Dummy 1.0")
-	_ = ib.AddStandardWithName("Software", "Ghost-Rizz OS 1.0")
-	_ = ib.AddStandardWithName("DateTime", "2026:05:13 12:00:00")
+	for _, call := range []func() error{
+		func() error { return addTag(ib, "ImageWidth", []uint32{800}) },
+		func() error { return addTag(ib, "ImageLength", []uint32{600}) },
+		func() error { return addTag(ib, "Make", "Ghost-Rizz Generator") },
+		func() error { return addTag(ib, "Model", "Dummy 1.0") },
+		func() error { return addTag(ib, "Software", "Ghost-Rizz OS 1.0") },
+		func() error { return addTag(ib, "DateTime", "2026:05:13 12:00:00") },
+	} {
+		if err := call(); err != nil {
+			return nil, err
+		}
+	}
 
 	exifIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/Exif")
 	if err != nil {
 		return nil, err
 	}
-	_ = exifIb.AddStandardWithName("DateTimeOriginal", "2026:05:13 12:00:00")
-	_ = exifIb.AddStandardWithName("ExposureTime", []exifcommon.Rational{{Numerator: 1, Denominator: 100}})
+	for _, call := range []func() error{
+		func() error { return addTag(exifIb, "DateTimeOriginal", "2026:05:13 12:00:00") },
+		func() error {
+			return addTag(exifIb, "ExposureTime", []exifcommon.Rational{{Numerator: 1, Denominator: 100}})
+		},
+	} {
+		if err := call(); err != nil {
+			return nil, err
+		}
+	}
 
 	gpsIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/GPSInfo")
 	if err != nil {
 		return nil, err
 	}
-	_ = gpsIb.AddStandardWithName("GPSLatitudeRef", "N")
-	_ = gpsIb.AddStandardWithName("GPSLatitude", []exifcommon.Rational{
-		{Numerator: 40, Denominator: 1}, {Numerator: 45, Denominator: 1}, {Numerator: 0, Denominator: 1},
-	})
+	for _, call := range []func() error{
+		func() error { return addTag(gpsIb, "GPSLatitudeRef", "N") },
+		func() error {
+			return addTag(gpsIb, "GPSLatitude", []exifcommon.Rational{
+				{Numerator: 40, Denominator: 1}, {Numerator: 45, Denominator: 1}, {Numerator: 0, Denominator: 1},
+			})
+		},
+	} {
+		if err := call(); err != nil {
+			return nil, err
+		}
+	}
 
 	return ib, nil
 }

@@ -3,6 +3,7 @@ package processor
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -46,6 +47,12 @@ func TestGetMediaHandler(t *testing.T) {
 				t.Errorf("GetMediaHandler() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if err == nil && mh != nil {
+				// Skip exiftool-dependent HEIC methods if the tool is absent
+				if tt.name == "HEIC" {
+					if _, lookErr := exec.LookPath("exiftool"); lookErr != nil {
+						t.Skip("exiftool not found, skipping HEIC method coverage")
+					}
+				}
 				// Hit the basic methods to ensure coverage
 				_ = mh.DropExif()
 				var buf bytes.Buffer

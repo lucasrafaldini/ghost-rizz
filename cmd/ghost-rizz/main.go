@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -45,6 +46,9 @@ func run(args []string) int {
 	switch args[0] {
 	case "generate":
 		if err := generateCmd.Parse(args[1:]); err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return 0
+			}
 			return 1
 		}
 		_, _ = fmt.Fprintf(stdout, "Generating %d images to %s\n", *genCount, *genOut)
@@ -56,6 +60,9 @@ func run(args []string) int {
 		_, _ = fmt.Fprintln(stdout, "Generation complete.")
 	case "fuzz":
 		if err := fuzzCmd.Parse(args[1:]); err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return 0
+			}
 			return 1
 		}
 		_, _ = fmt.Fprintf(stdout, "Processing images from %s to %s (mode: %s)\n", *fuzzIn, *fuzzOut, *fuzzMode)
@@ -67,6 +74,9 @@ func run(args []string) int {
 		_, _ = fmt.Fprintln(stdout, "Processing complete.")
 	case "report":
 		if err := reportCmd.Parse(args[1:]); err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return 0
+			}
 			return 1
 		}
 		outDir := *reportOut
