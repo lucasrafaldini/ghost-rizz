@@ -6,23 +6,22 @@ import (
 	"image/color"
 	"image/draw"
 	"image/jpeg"
+	"image/png"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
 	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
+	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
 )
 
 func GenerateImages(count int, outDir string) error {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
-	rand.Seed(time.Now().UnixNano())
-
 	var wg sync.WaitGroup
 	errCh := make(chan error, count)
 
@@ -30,8 +29,14 @@ func GenerateImages(count int, outDir string) error {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			filename := filepath.Join(outDir, fmt.Sprintf("dummy_%04d.jpg", index))
-			if err := createDummyJPEGWithEXIF(filename); err != nil {
+			var err error
+			filename := filepath.Join(outDir, fmt.Sprintf("dummy_%04d", index))
+			if index%2 == 0 {
+				err = createDummyJPEGWithEXIF(filename + ".jpg")
+			} else {
+				err = createDummyPNGWithEXIF(filename + ".png")
+			}
+			if err != nil {
 				errCh <- fmt.Errorf("failed to create image %d: %w", index, err)
 			}
 		}(i)
@@ -58,11 +63,11 @@ func createDummyJPEGWithEXIF(filename string) error {
 		return err
 	}
 	if err := jpeg.Encode(f, img, &jpeg.Options{Quality: 80}); err != nil {
-		f.Close()
+		_ = f.Close()
 		return err
 	}
-	f.Close()
-	defer os.Remove(tempFile)
+	_ = f.Close()
+	defer func() { _ = os.Remove(tempFile) }()
 
 	jmp := jpegstructure.NewJpegMediaParser()
 	intfc, err := jmp.ParseFile(tempFile)
@@ -85,9 +90,51 @@ func createDummyJPEGWithEXIF(filename string) error {
 	if err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
 	return sl.Write(outF)
+}
+
+func createDummyPNGWithEXIF(filename string) error {
+	img := image.NewRGBA(image.Rect(0, 0, 100, 100))
+	draw.Draw(img, img.Bounds(), &image.Uniform{color.RGBA{uint8(rand.Intn(255)), uint8(rand.Intn(255)), uint8(rand.Intn(255)), 255}}, image.Point{}, draw.Src)
+
+	tempFile := filename + ".tmp.png"
+	f, err := os.Create(tempFile)
+	if err != nil {
+		return err
+	}
+	if err := png.Encode(f, img); err != nil {
+		_ = f.Close()
+		return err
+	}
+	_ = f.Close()
+	defer func() { _ = os.Remove(tempFile) }()
+
+	pmp := pngstructure.NewPngMediaParser()
+	intfc, err := pmp.ParseFile(tempFile)
+	if err != nil {
+		return err
+	}
+	cs := intfc.(*pngstructure.ChunkSlice)
+
+	ib, err := buildBaseEXIF()
+	if err != nil {
+		return err
+	}
+
+	err = cs.SetExif(ib)
+	if err != nil {
+		return err
+	}
+
+	outF, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = outF.Close() }()
+
+	return cs.WriteTo(outF)
 }
 
 func buildBaseEXIF() (*exif.IfdBuilder, error) {

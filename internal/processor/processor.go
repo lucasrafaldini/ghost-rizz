@@ -2,19 +2,23 @@ package processor
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 )
 
+func isSupportedFormat(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".heic" || ext == ".heif"
+}
+
 func ProcessImages(inDir, outDir, mode string) error {
 	if err := os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
 
-	files, err := ioutil.ReadDir(inDir)
+	files, err := os.ReadDir(inDir)
 	if err != nil {
 		return err
 	}
@@ -23,7 +27,7 @@ func ProcessImages(inDir, outDir, mode string) error {
 	errCh := make(chan error, len(files))
 
 	for _, file := range files {
-		if file.IsDir() || !strings.HasSuffix(strings.ToLower(file.Name()), ".jpg") {
+		if file.IsDir() || !isSupportedFormat(file.Name()) {
 			continue
 		}
 

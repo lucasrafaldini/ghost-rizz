@@ -56,7 +56,7 @@ func TestProcessImages_ProcessSingleImageError(t *testing.T) {
 	outDir := t.TempDir()
 
 	badFile := filepath.Join(inDir, "bad.jpg")
-	os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
+	_ = os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
 
 	err := ProcessImages(inDir, outDir, "clean")
 	if err != nil {

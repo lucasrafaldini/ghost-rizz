@@ -2,18 +2,16 @@ package processor
 
 import (
 	"encoding/csv"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/dsoprea/go-exif/v3"
-	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
 )
 
 func GenerateReport(inDir, outCSV string) error {
-	files, err := ioutil.ReadDir(inDir)
+	files, err := os.ReadDir(inDir)
 	if err != nil {
 		return err
 	}
@@ -22,7 +20,7 @@ func GenerateReport(inDir, outCSV string) error {
 	if err != nil {
 		return err
 	}
-	defer csvFile.Close()
+	defer func() { _ = csvFile.Close() }()
 
 	writer := csv.NewWriter(csvFile)
 	defer writer.Flush()
@@ -36,7 +34,7 @@ func GenerateReport(inDir, outCSV string) error {
 	var wg sync.WaitGroup
 
 	for _, file := range files {
-		if file.IsDir() || !strings.HasSuffix(strings.ToLower(file.Name()), ".jpg") {
+		if file.IsDir() || !isSupportedFormat(file.Name()) {
 			continue
 		}
 
@@ -47,17 +45,15 @@ func GenerateReport(inDir, outCSV string) error {
 		go func(path, name string) {
 			defer wg.Done()
 			row := []string{name, "false", "", "", "", "", "", "", ""}
-			
-			jmp := jpegstructure.NewJpegMediaParser()
-			intfc, err := jmp.ParseFile(path)
+
+			mh, err := GetMediaHandler(path)
 			if err != nil {
 				row[1] = "error"
 				rowCh <- row
 				return
 			}
-			sl := intfc.(*jpegstructure.SegmentList)
 
-			_, rawExif, err := sl.Exif()
+			rawExif, err := mh.RawExif()
 			if err != nil {
 				if !strings.Contains(err.Error(), "no exif data") {
 					row[1] = "error"
@@ -93,7 +89,7 @@ func GenerateReport(inDir, outCSV string) error {
 	}()
 
 	for row := range rowCh {
-		writer.Write(row)
+		_ = writer.Write(row)
 	}
 
 	return nil

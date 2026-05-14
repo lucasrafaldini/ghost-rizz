@@ -21,7 +21,7 @@ func main() {
 
 func run(args []string) int {
 	if len(args) < 1 {
-		fmt.Fprintln(stdout, "expected 'generate', 'fuzz' or 'report' subcommands")
+		_, _ = fmt.Fprintln(stdout, "expected 'generate', 'fuzz' or 'report' subcommands")
 		return 1
 	}
 
@@ -45,38 +45,38 @@ func run(args []string) int {
 		if err := generateCmd.Parse(args[1:]); err != nil {
 			return 1
 		}
-		fmt.Fprintf(stdout, "Generating %d images to %s\n", *genCount, *genOut)
+		_, _ = fmt.Fprintf(stdout, "Generating %d images to %s\n", *genCount, *genOut)
 		err := generator.GenerateImages(*genCount, *genOut)
 		if err != nil {
-			fmt.Fprintf(stdout, "Error generating images: %v\n", err)
+			_, _ = fmt.Fprintf(stdout, "Error generating images: %v\n", err)
 			return 1
 		}
-		fmt.Fprintln(stdout, "Generation complete.")
+		_, _ = fmt.Fprintln(stdout, "Generation complete.")
 	case "fuzz":
 		if err := fuzzCmd.Parse(args[1:]); err != nil {
 			return 1
 		}
-		fmt.Fprintf(stdout, "Processing images from %s to %s (mode: %s)\n", *fuzzIn, *fuzzOut, *fuzzMode)
+		_, _ = fmt.Fprintf(stdout, "Processing images from %s to %s (mode: %s)\n", *fuzzIn, *fuzzOut, *fuzzMode)
 		err := processor.ProcessImages(*fuzzIn, *fuzzOut, *fuzzMode)
 		if err != nil {
-			fmt.Fprintf(stdout, "Error processing images: %v\n", err)
+			_, _ = fmt.Fprintf(stdout, "Error processing images: %v\n", err)
 			return 1
 		}
-		fmt.Fprintln(stdout, "Processing complete.")
+		_, _ = fmt.Fprintln(stdout, "Processing complete.")
 	case "report":
 		if err := reportCmd.Parse(args[1:]); err != nil {
 			return 1
 		}
 		outCSV := filepath.Join(*reportIn, "report.csv")
-		fmt.Fprintf(stdout, "Generating report from %s to %s\n", *reportIn, outCSV)
+		_, _ = fmt.Fprintf(stdout, "Generating report from %s to %s\n", *reportIn, outCSV)
 		err := processor.GenerateReport(*reportIn, outCSV)
 		if err != nil {
-			fmt.Fprintf(stdout, "Error generating report: %v\n", err)
+			_, _ = fmt.Fprintf(stdout, "Error generating report: %v\n", err)
 			return 1
 		}
-		fmt.Fprintln(stdout, "Report complete.")
+		_, _ = fmt.Fprintln(stdout, "Report complete.")
 	default:
-		fmt.Fprintln(stdout, "expected 'generate', 'fuzz' or 'report' subcommands")
+		_, _ = fmt.Fprintln(stdout, "expected 'generate', 'fuzz' or 'report' subcommands")
 		return 1
 	}
 	return 0

@@ -103,7 +103,7 @@ func TestRunCommand(t *testing.T) {
 			}
 		})
 	}
-	
+
 	stdout = os.Stdout
 }
 
@@ -118,7 +118,7 @@ func TestMainFunc(t *testing.T) {
 	osExit = func(code int) {
 		exitCode = code
 	}
-	
+
 	main()
 	if exitCode != 1 {
 		t.Errorf("expected exit code 1, got %d", exitCode)

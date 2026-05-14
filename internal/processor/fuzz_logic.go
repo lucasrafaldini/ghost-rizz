@@ -8,28 +8,26 @@ import (
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
-	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
 )
 
 func processSingleImage(inPath, outPath, mode string) error {
-	jmp := jpegstructure.NewJpegMediaParser()
-	intfc, err := jmp.ParseFile(inPath)
+	mh, err := GetMediaHandler(inPath)
 	if err != nil {
 		return err
 	}
-	sl := intfc.(*jpegstructure.SegmentList)
 
-	if mode == "clean" {
-		_, err = sl.DropExif()
+	switch mode {
+	case "clean":
+		err = mh.DropExif()
 		if err != nil && !strings.Contains(err.Error(), "no exif data") {
 			return err
 		}
-	} else if mode == "fuzz" {
+	case "fuzz":
 		ib, err := createRandomEXIF()
 		if err != nil {
 			return err
 		}
-		err = sl.SetExif(ib)
+		err = mh.SetExif(ib)
 		if err != nil {
 			return err
 		}
@@ -39,9 +37,9 @@ func processSingleImage(inPath, outPath, mode string) error {
 	if err != nil {
 		return err
 	}
-	defer outF.Close()
+	defer func() { _ = outF.Close() }()
 
-	return sl.Write(outF)
+	return mh.Write(outF)
 }
 
 func createRandomEXIF() (*exif.IfdBuilder, error) {
@@ -52,9 +50,9 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	ti := exif.NewTagIndex()
 	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
 
-	_ = ib.AddStandardWithName("Make", generateRandomString(10))
-	_ = ib.AddStandardWithName("Model", generateRandomString(12))
-	_ = ib.AddStandardWithName("Software", generateRandomString(15))
+	_ = ib.AddStandardWithName("Make", GenerateRandomString(10))
+	_ = ib.AddStandardWithName("Model", GenerateRandomString(12))
+	_ = ib.AddStandardWithName("Software", GenerateRandomString(15))
 	_ = ib.AddStandardWithName("DateTime", fmt.Sprintf("20%02d:%02d:%02d %02d:%02d:%02d", rand.Intn(30), rand.Intn(12)+1, rand.Intn(28)+1, rand.Intn(24), rand.Intn(60), rand.Intn(60)))
 
 	exifIb, _ := exif.GetOrCreateIbFromRootIb(ib, "IFD/Exif")
@@ -75,7 +73,7 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	return ib, nil
 }
 
-func generateRandomString(n int) string {
+func GenerateRandomString(n int) string {
 	letters := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 	b := make([]rune, n)
 	for i := range b {

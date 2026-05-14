@@ -8,7 +8,7 @@ import (
 )
 
 func TestGenerateRandomString(t *testing.T) {
-	str := generateRandomString(10)
+	str := GenerateRandomString(10)
 	if len(str) != 10 {
 		t.Errorf("expected length 10, got %d", len(str))
 	}
@@ -16,7 +16,7 @@ func TestGenerateRandomString(t *testing.T) {
 
 func TestProcessSingleImage(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	err := generator.GenerateImages(1, tmpDir)
 	if err != nil {
 		t.Fatalf("failed to generate image: %v", err)
@@ -52,9 +52,9 @@ func TestProcessSingleImage_ParseError(t *testing.T) {
 
 func TestProcessSingleImage_WriteError(t *testing.T) {
 	tmpDir := t.TempDir()
-	generator.GenerateImages(1, tmpDir)
+	_ = generator.GenerateImages(1, tmpDir)
 	inPath := filepath.Join(tmpDir, "dummy_0000.jpg")
-	
+
 	err := processSingleImage(inPath, "/dev/null/cannot_write.jpg", "clean")
 	if err == nil {
 		t.Errorf("expected error when output path is invalid")

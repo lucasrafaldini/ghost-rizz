@@ -38,7 +38,7 @@ func TestGenerateReport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open generated csv: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	reader := csv.NewReader(f)
 	records, err := reader.ReadAll()
@@ -68,7 +68,7 @@ func TestGenerateReport_InvalidOutCSV(t *testing.T) {
 func TestGenerateReport_NonJpeg(t *testing.T) {
 	inDir := t.TempDir()
 	badFile := filepath.Join(inDir, "bad.txt")
-	os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
+	_ = os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
 
 	err := GenerateReport(inDir, filepath.Join(inDir, "report.csv"))
 	if err != nil {
@@ -79,7 +79,7 @@ func TestGenerateReport_NonJpeg(t *testing.T) {
 func TestGenerateReport_ParseError(t *testing.T) {
 	inDir := t.TempDir()
 	badFile := filepath.Join(inDir, "bad.jpg")
-	os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
+	_ = os.WriteFile(badFile, []byte("not a real jpeg"), 0644)
 
 	err := GenerateReport(inDir, filepath.Join(inDir, "report.csv"))
 	if err != nil {

@@ -2,7 +2,12 @@
 
 A massive, highly-concurrent EXIF metadata cleaner and fuzzer written in pure Go. 
 
-`ghost-rizz` is designed to process huge datasets of JPEG images incredibly fast by taking advantage of Go routines. It provides features to generate dummy datasets for testing, strip all metadata cleanly, or fuzz metadata with randomized tags to test metadata ingestion pipelines.
+`ghost-rizz` is designed to process huge datasets of image files incredibly fast by taking advantage of Go routines. It provides features to generate dummy datasets for testing, strip all metadata cleanly, or fuzz metadata with randomized tags to test metadata ingestion pipelines.
+
+### Supported Formats
+- **JPEG** (`.jpg`, `.jpeg`): Native support, extremely fast.
+- **PNG** (`.png`): Native support, extremely fast.
+- **HEIC** (`.heic`, `.heif`): Supported via `exiftool` (Option A architecture). **Requires `exiftool` to be installed on your system.**
 
 ## Benchmark
 
@@ -30,7 +35,7 @@ go run ./cmd/ghost-rizz generate -count 1000 -out ./input_photos
 
 ### 2. Fuzz
 Processes images from an input folder concurrently using `goroutines`. Supports two modes:
-- **`clean`**: Completely strips the APP1 (EXIF) segment from the image.
+- **`clean`**: Completely strips the EXIF segment from the image.
 - **`fuzz`**: Preserves the EXIF structure but randomizes the values of standard tags (Make, Model, Software, DateTime, ExposureTime, GPS coordinates).
 
 Output files are automatically suffixed with `_clean` or `_fuzz` and placed in the target directory.
