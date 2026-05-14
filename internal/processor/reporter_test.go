@@ -197,3 +197,22 @@ func TestGenerateReport_NoExt(t *testing.T) {
 		t.Errorf("expected no error for file with no extension, got %v", err)
 	}
 }
+
+func TestGenerateReport_MkdirAllError_Real(t *testing.T) {
+	inDir := t.TempDir()
+	parent := filepath.Join(t.TempDir(), "file")
+	_ = os.WriteFile(parent, []byte("x"), 0644)
+	outCSV := filepath.Join(parent, "report.csv")
+	err := GenerateReport(inDir, outCSV)
+	if err == nil {
+		t.Errorf("expected error when parent dir is a file")
+	}
+}
+
+func TestGenerateReport_AllSupported(t *testing.T) {
+	inDir := t.TempDir()
+	outCSV := filepath.Join(t.TempDir(), "all.csv")
+	_ = os.WriteFile(filepath.Join(inDir, "f1.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f2.png"), []byte("x"), 0644)
+	_ = GenerateReport(inDir, outCSV)
+}

@@ -26,6 +26,8 @@ func TestIsSupportedFormat(t *testing.T) {
 		{"Jpeg_MIX", "test.Jpeg", true},
 		{"txt", "test.txt", false},
 		{"noext", "test", false},
+		{"JPG", "test.JPG", true},
+		{"JPEG", "test.JPEG", true},
 		{"no_ext", "test", false},
 		{"empty", "", false},
 		{"dot", ".", false},
@@ -219,4 +221,43 @@ func TestProcessImages_SameDirError(t *testing.T) {
 	if !strings.Contains(err.Error(), "must be different") {
 		t.Errorf("expected 'must be different' error, got: %v", err)
 	}
+}
+
+func TestProcessImages_HEIC_Fuzz_Fallback(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	heicFile := filepath.Join(inDir, "test.heic")
+	_ = os.WriteFile(heicFile, []byte("fake heic"), 0644)
+
+	// Even if exiftool is missing, ProcessImages(fuzz) should hit the fallback
+	// if it gets the 'unsupported for HEIC' error from SetExif.
+	_ = ProcessImages(inDir, outDir, "fuzz")
+}
+
+func TestProcessImages_SkipDir(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.Mkdir(filepath.Join(inDir, "subdir"), 0755)
+	err := ProcessImages(inDir, outDir, "clean")
+	if err != nil {
+		t.Errorf("expected no error when skipping subdir, got %v", err)
+	}
+}
+
+func TestProcessImages_SkipNoExt(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "noext"), []byte("x"), 0644)
+	err := ProcessImages(inDir, outDir, "clean")
+	if err != nil {
+		t.Errorf("expected no error when skipping no-ext file, got %v", err)
+	}
+}
+
+func TestProcessImages_MultiJPG(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f1.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f2.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
 }

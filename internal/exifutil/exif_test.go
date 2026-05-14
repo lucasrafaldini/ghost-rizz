@@ -69,3 +69,27 @@ func TestBuildBaseEXIF(t *testing.T) {
 	}
 }
 
+
+func TestAddTag_WrongType(t *testing.T) {
+	im, _ := exifcommon.NewIfdMappingWithStandard()
+	ti := exif.NewTagIndex()
+	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
+
+	// 'Make' expects a string, providing an int should fail.
+	err := AddTag(ib, "Make", 123)
+	if err == nil {
+		t.Errorf("AddTag(Make, 123) expected error, got nil")
+	}
+}
+
+func TestGetOrCreateIb_Error(t *testing.T) {
+	im, _ := exifcommon.NewIfdMappingWithStandard()
+	ti := exif.NewTagIndex()
+	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
+
+	// Providing an invalid IFD path should fail.
+	_, err := exif.GetOrCreateIbFromRootIb(ib, "INVALID/PATH/XYZ")
+	if err == nil {
+		t.Errorf("GetOrCreateIbFromRootIb(INVALID/PATH/XYZ) expected error, got nil")
+	}
+}

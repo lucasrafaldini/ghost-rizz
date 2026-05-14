@@ -100,3 +100,11 @@ func TestCreateDummyPNGWithEXIF_WriteError(t *testing.T) {
 		t.Errorf("expected error for unwritable path")
 	}
 }
+
+func TestGenerateImages_Count_1(t *testing.T) {
+	tmpDir := t.TempDir()
+	err := GenerateImages(1, tmpDir)
+	if err != nil {
+		t.Errorf("failed to generate 1 image: %v", err)
+	}
+}

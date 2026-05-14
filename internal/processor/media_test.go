@@ -286,3 +286,14 @@ func TestHeicHandler_Write_Error_Real(t *testing.T) {
 		t.Errorf("expected error for Write on HEIC")
 	}
 }
+
+func TestCheckExifTool_Fail(t *testing.T) {
+	oldPath := os.Getenv("PATH")
+	os.Setenv("PATH", "")
+	defer os.Setenv("PATH", oldPath)
+
+	err := CheckExifTool()
+	if err == nil {
+		t.Errorf("expected error when exiftool is missing from PATH")
+	}
+}
