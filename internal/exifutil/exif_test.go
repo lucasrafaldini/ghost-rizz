@@ -69,7 +69,6 @@ func TestBuildBaseEXIF(t *testing.T) {
 	}
 }
 
-
 func TestAddTag_WrongType(t *testing.T) {
 	im, _ := exifcommon.NewIfdMappingWithStandard()
 	ti := exif.NewTagIndex()
@@ -91,5 +90,16 @@ func TestGetOrCreateIb_Error(t *testing.T) {
 	_, err := exif.GetOrCreateIbFromRootIb(ib, "INVALID/PATH/XYZ")
 	if err == nil {
 		t.Errorf("GetOrCreateIbFromRootIb(INVALID/PATH/XYZ) expected error, got nil")
+	}
+}
+
+func TestAddTag_UnknownTag(t *testing.T) {
+	im, _ := exifcommon.NewIfdMappingWithStandard()
+	ti := exif.NewTagIndex()
+	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
+
+	err := AddTag(ib, "UnknownTagXYZ", "value")
+	if err == nil {
+		t.Errorf("expected error for unknown tag")
 	}
 }

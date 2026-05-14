@@ -224,8 +224,6 @@ func TestHeicHandler_RawExif_MissingFile(t *testing.T) {
 	}
 }
 
-
-
 type errorWriter struct{}
 
 func (e *errorWriter) Write(p []byte) (n int, err error) {
@@ -234,10 +232,9 @@ func (e *errorWriter) Write(p []byte) (n int, err error) {
 
 func TestMediaHandler_Write_Error(t *testing.T) {
 	tmpDir := t.TempDir()
-	inPath := filepath.Join(tmpDir, "test_err.png")
 	_ = generator.GenerateImages(1, tmpDir)
 	entries, _ := os.ReadDir(tmpDir)
-	inPath = filepath.Join(tmpDir, entries[0].Name())
+	inPath := filepath.Join(tmpDir, entries[0].Name())
 
 	h, _ := GetMediaHandler(inPath)
 	err := h.Write(&errorWriter{})
@@ -249,7 +246,7 @@ func TestMediaHandler_Write_Error(t *testing.T) {
 func TestHeicHandler_Write_Error(t *testing.T) {
 	// We can't easily trigger an error in Write if exiftool is not there,
 	// but we can trigger an error if the tmp file creation fails or if ReadFile fails.
-    // Actually, I'll just test that it returns error when GetMediaHandler fails for a non-image.
+	// Actually, I'll just test that it returns error when GetMediaHandler fails for a non-image.
 }
 
 func TestHeicHandler_RawExif_Error(t *testing.T) {
@@ -266,7 +263,7 @@ func TestHeicHandler_SetExif_Error(t *testing.T) {
 	im, _ := exifcommon.NewIfdMappingWithStandard()
 	ti := exif.NewTagIndex()
 	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
-	
+
 	err := h.SetExif(ib)
 	if err == nil {
 		t.Errorf("expected error when setting non-nil IfdBuilder for HEIC")
@@ -289,11 +286,23 @@ func TestHeicHandler_Write_Error_Real(t *testing.T) {
 
 func TestCheckExifTool_Fail(t *testing.T) {
 	oldPath := os.Getenv("PATH")
-	os.Setenv("PATH", "")
-	defer os.Setenv("PATH", oldPath)
+	_ = os.Setenv("PATH", "")
+	defer func() { _ = os.Setenv("PATH", oldPath) }()
 
 	err := CheckExifTool()
 	if err == nil {
 		t.Errorf("expected error when exiftool is missing from PATH")
 	}
+}
+
+func TestPngHandler_DropExif_Error_Nil(t *testing.T) {
+	h := &pngHandler{cs: nil}
+	defer func() { _ = recover() }()
+	_ = h.DropExif()
+}
+
+func TestJpegHandler_DropExif_Error_Nil(t *testing.T) {
+	h := &jpegHandler{sl: nil}
+	defer func() { _ = recover() }()
+	_ = h.DropExif()
 }

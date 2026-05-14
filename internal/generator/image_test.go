@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
-
 )
 
 func TestGenerateImages(t *testing.T) {
@@ -85,10 +84,6 @@ func TestCreateDummyPNGWithEXIF_OutFileError(t *testing.T) {
 	}
 }
 
-
-
-
-
 func TestCreateDummyPNGWithEXIF_WriteError(t *testing.T) {
 	badPath := "/proc/invalid/path/png"
 	if runtime.GOOS == "darwin" {
@@ -106,5 +101,13 @@ func TestGenerateImages_Count_1(t *testing.T) {
 	err := GenerateImages(1, tmpDir)
 	if err != nil {
 		t.Errorf("failed to generate 1 image: %v", err)
+	}
+}
+
+func TestGenerateImages_Count_2(t *testing.T) {
+	tmpDir := t.TempDir()
+	err := GenerateImages(2, tmpDir)
+	if err != nil {
+		t.Errorf("failed to generate 2 images: %v", err)
 	}
 }

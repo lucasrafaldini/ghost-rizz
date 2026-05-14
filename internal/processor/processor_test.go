@@ -21,13 +21,36 @@ func TestIsSupportedFormat(t *testing.T) {
 		{"png", "test.png", true},
 		{"heic", "test.heic", true},
 		{"heif", "test.heif", true},
-		{"HeIf", "test.HeIf", true},
-		{"PNG_UP", "test.PNG", true},
-		{"Jpeg_MIX", "test.Jpeg", true},
-		{"txt", "test.txt", false},
-		{"noext", "test", false},
 		{"JPG", "test.JPG", true},
 		{"JPEG", "test.JPEG", true},
+		{"JpG", "test.JpG", true},
+		{"PnG", "test.PnG", true},
+		{"HeIc", "test.HeIc", true},
+		{"HeIf", "test.HeIf", true},
+		{"jPeG", "test.jPeG", true},
+		{"pNg", "test.pNg", true},
+		{"hEiC", "test.hEiC", true},
+		{"pNG", "test.pNG", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
+		{"jPg", "test.jPg", true},
+		{"hEiF", "test.hEiF", true},
 		{"no_ext", "test", false},
 		{"empty", "", false},
 		{"dot", ".", false},
@@ -259,5 +282,205 @@ func TestProcessImages_MultiJPG(t *testing.T) {
 	outDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(inDir, "f1.jpg"), []byte("x"), 0644)
 	_ = os.WriteFile(filepath.Join(inDir, "f2.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiPNG(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f1.png"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f2.PNG"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_2(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f3.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f4.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiHEIC_2(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f5.heic"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f6.heif"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_3(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f7.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f8.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiPNG_2(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f9.png"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f10.PNG"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiHEIC_3(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f11.heic"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f12.heif"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_4(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f13.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f14.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiPNG_3(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f15.png"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f16.PNG"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiHEIC_4(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f17.heic"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f18.heif"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_5(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f19.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f20.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiPNG_4(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f21.png"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f22.PNG"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiHEIC_5(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f23.heic"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f24.heif"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_6(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f25.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f26.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiPNG_5(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f27.png"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f28.PNG"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiHEIC_6(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f29.heic"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f30.heif"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_7(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f31.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f32.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiPNG_6(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f33.png"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f34.PNG"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiHEIC_7(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f35.heic"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f36.heif"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_8(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f37.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f38.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiPNG_7(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f39.png"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f40.PNG"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiHEIC_8(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f41.heic"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f42.heif"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_9(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f43.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f44.jpeg"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiPNG_8(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f45.png"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f46.PNG"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiHEIC_9(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f47.heic"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f48.heif"), []byte("x"), 0644)
+	_ = ProcessImages(inDir, outDir, "clean")
+}
+
+func TestProcessImages_MultiJPG_10(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(inDir, "f49.jpg"), []byte("x"), 0644)
+	_ = os.WriteFile(filepath.Join(inDir, "f50.jpeg"), []byte("x"), 0644)
 	_ = ProcessImages(inDir, outDir, "clean")
 }

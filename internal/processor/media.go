@@ -163,7 +163,7 @@ func (h *heicHandler) Write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 
 	if _, err = io.Copy(tmpFile, src); err != nil {
 		return err
@@ -189,7 +189,7 @@ func (h *heicHandler) Write(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	defer updated.Close()
+	defer func() { _ = updated.Close() }()
 
 	_, err = io.Copy(w, updated)
 	return err

@@ -137,7 +137,7 @@ func TestGenerateReport_HEIC(t *testing.T) {
 		// Let's verify the CSV contains 'error'.
 		f, _ := os.Open(outCSV)
 		if f != nil {
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 			records, _ := csv.NewReader(f).ReadAll()
 			if len(records) > 1 && records[1][1] != "error" {
 				t.Errorf("expected HEIC row to have error when exiftool is missing")
@@ -215,4 +215,15 @@ func TestGenerateReport_AllSupported(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(inDir, "f1.jpg"), []byte("x"), 0644)
 	_ = os.WriteFile(filepath.Join(inDir, "f2.png"), []byte("x"), 0644)
 	_ = GenerateReport(inDir, outCSV)
+}
+
+func TestGenerateReport_MkdirAllError_Real_2(t *testing.T) {
+	inDir := t.TempDir()
+	parent := filepath.Join(t.TempDir(), "file2")
+	_ = os.WriteFile(parent, []byte("x"), 0644)
+	outCSV := filepath.Join(parent, "report2.csv")
+	err := GenerateReport(inDir, outCSV)
+	if err == nil {
+		t.Errorf("expected error when parent dir is a file")
+	}
 }
