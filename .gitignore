@@ -32,7 +32,7 @@ go.work.sum
 # .vscode/
 
 # Custom
-ghost-rizz
+/ghost-rizz
 input_photos/
 output_photos/
 benchmark_results.txt
