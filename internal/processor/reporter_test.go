@@ -20,7 +20,7 @@ func TestGenerateReport(t *testing.T) {
 
 	// Add a non-supported file to test the skip branch
 	_ = os.WriteFile(filepath.Join(inDir, "skip.txt"), []byte("skip"), 0644)
-	
+
 	// Add a directory to test the skip branch
 	_ = os.MkdirAll(filepath.Join(inDir, "subdir"), 0755)
 
@@ -151,7 +151,7 @@ func TestGenerateReport_OutCSVIsDir(t *testing.T) {
 
 func TestGenerateReport_MkdirAllError(t *testing.T) {
 	inDir := t.TempDir()
-	
+
 	parentFile := filepath.Join(t.TempDir(), "file")
 	_ = os.WriteFile(parentFile, []byte("x"), 0644)
 	badOutDir := filepath.Join(parentFile, "subdir")

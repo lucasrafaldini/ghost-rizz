@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
@@ -55,8 +56,15 @@ func createRandomEXIF() (*exif.IfdBuilder, error) {
 	ib := exif.NewIfdBuilder(im, ti, exifcommon.IfdStandardIfdIdentity, exifcommon.EncodeDefaultByteOrder)
 
 	randomDate := func() string {
+		year := rand.Intn(130) + 1970
+		month := rand.Intn(12) + 1
+		// Use time.Date to find the last day of the month
+		t := time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, time.UTC)
+		maxDays := t.Day()
+		day := rand.Intn(maxDays) + 1
+
 		return fmt.Sprintf("%04d:%02d:%02d %02d:%02d:%02d",
-			rand.Intn(130)+1970, rand.Intn(12)+1, rand.Intn(28)+1,
+			year, month, day,
 			rand.Intn(24), rand.Intn(60), rand.Intn(60))
 	}
 

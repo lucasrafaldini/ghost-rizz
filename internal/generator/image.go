@@ -14,9 +14,9 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/outis/ghost-rizz/internal/exifutil"
 	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
 	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
+	"github.com/outis/ghost-rizz/internal/exifutil"
 )
 
 // GenerateImages creates a specified number of procedural images injected with dummy EXIF metadata.
@@ -144,5 +144,3 @@ func createDummyPNGWithEXIF(filename string) error {
 
 	return cs.WriteTo(outF)
 }
-
-

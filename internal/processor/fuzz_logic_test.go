@@ -71,12 +71,14 @@ func TestProcessSingleImage_WriteError(t *testing.T) {
 }
 
 func TestCreateRandomEXIF(t *testing.T) {
-	ib, err := createRandomEXIF()
-	if err != nil {
-		t.Fatalf("createRandomEXIF failed: %v", err)
-	}
-	if ib == nil {
-		t.Fatal("expected non-nil IfdBuilder")
+	for i := 0; i < 50; i++ {
+		ib, err := createRandomEXIF()
+		if err != nil {
+			t.Fatalf("failed to create random EXIF: %v", err)
+		}
+		if ib == nil {
+			t.Fatal("expected non-nil IfdBuilder")
+		}
 	}
 }
 

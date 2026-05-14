@@ -46,7 +46,7 @@ func TestProcessImages(t *testing.T) {
 
 	// Add a non-supported file to test the skip branch
 	_ = os.WriteFile(filepath.Join(inDir, "skip.txt"), []byte("skip"), 0644)
-	
+
 	// Add a directory to test the skip branch
 	_ = os.MkdirAll(filepath.Join(inDir, "subdir"), 0755)
 

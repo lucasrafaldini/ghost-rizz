@@ -27,17 +27,6 @@ func ProcessImages(inDir, outDir, mode string) error {
 		return err
 	}
 
-	for _, file := range files {
-		if !file.IsDir() && isSupportedFormat(file.Name()) {
-			if strings.HasSuffix(strings.ToLower(file.Name()), ".heic") || strings.HasSuffix(strings.ToLower(file.Name()), ".heif") {
-				if err := CheckExifTool(); err != nil {
-					return err
-				}
-				break
-			}
-		}
-	}
-
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(files))
 
@@ -49,13 +38,21 @@ func ProcessImages(inDir, outDir, mode string) error {
 			continue
 		}
 
+		// Only check for exiftool if we have an HEIC/HEIF file
+		if strings.HasSuffix(strings.ToLower(file.Name()), ".heic") || strings.HasSuffix(strings.ToLower(file.Name()), ".heif") {
+			if err := CheckExifTool(); err != nil {
+				// We fail early here if a required tool for this file type is missing
+				return fmt.Errorf("exiftool check failed for %s: %w", file.Name(), err)
+			}
+		}
+
 		inPath := filepath.Join(inDir, file.Name())
 		ext := filepath.Ext(file.Name())
 		base := strings.TrimSuffix(file.Name(), ext)
 		outPath := filepath.Join(outDir, fmt.Sprintf("%s_%s%s", base, mode, ext))
 
-		sem <- struct{}{}
 		wg.Add(1)
+		sem <- struct{}{}
 		go func(in, out string) {
 			defer wg.Done()
 			defer func() { <-sem }()

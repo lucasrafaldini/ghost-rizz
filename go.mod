@@ -1,6 +1,6 @@
 module github.com/outis/ghost-rizz
 
-go 1.26.2
+go 1.26
 
 require (
 	github.com/dsoprea/go-exif/v3 v3.0.1
