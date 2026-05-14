@@ -79,3 +79,25 @@ func TestCreateRandomEXIF(t *testing.T) {
 		t.Fatal("expected non-nil IfdBuilder")
 	}
 }
+
+func TestProcessSingleImage_UnknownMode(t *testing.T) {
+	err := processSingleImage("/dev/null", "out.jpg", "invalid_mode")
+	if err == nil {
+		t.Errorf("expected error for unknown mode")
+	}
+}
+
+func TestProcessSingleImage_OutFileError(t *testing.T) {
+	tmpDir := t.TempDir()
+	_ = generator.GenerateImages(1, tmpDir)
+	entries, _ := os.ReadDir(tmpDir)
+	inPath := filepath.Join(tmpDir, entries[0].Name())
+
+	badOut := filepath.Join(tmpDir, "bad_out")
+	_ = os.MkdirAll(badOut, 0755)
+
+	err := processSingleImage(inPath, badOut, "clean")
+	if err == nil {
+		t.Errorf("expected error when output file is a directory")
+	}
+}

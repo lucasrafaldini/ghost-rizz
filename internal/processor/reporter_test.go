@@ -18,6 +18,9 @@ func TestGenerateReport(t *testing.T) {
 		t.Fatalf("failed to generate image: %v", err)
 	}
 
+	// Add a non-supported file to test the skip branch
+	_ = os.WriteFile(filepath.Join(inDir, "skip.txt"), []byte("skip"), 0644)
+
 	err = ProcessImages(inDir, outDir, "clean")
 	if err != nil {
 		t.Fatalf("ProcessImages clean failed: %v", err)
@@ -110,5 +113,35 @@ func TestGenerateReport_ParseError(t *testing.T) {
 		}
 	} else {
 		t.Errorf("failed to open csv: %v", err)
+	}
+}
+
+func TestGenerateReport_HEIC(t *testing.T) {
+	inDir := t.TempDir()
+	outCSV := filepath.Join(inDir, "report.csv")
+
+	// Create a dummy HEIC file
+	heicFile := filepath.Join(inDir, "test.heic")
+	_ = os.WriteFile(heicFile, []byte("fake heic"), 0644)
+
+	// GenerateReport should call CheckExifTool.
+	_ = GenerateReport(inDir, outCSV)
+}
+
+func TestGenerateReport_MkdirError(t *testing.T) {
+	// GenerateReport doesn't call MkdirAll, it assumes outCSV's parent exists.
+	// But we can test ProcessImages's MkdirAll error here too or in processor_test.
+	err := ProcessImages(t.TempDir(), "/dev/null/invalid", "clean")
+	if err == nil {
+		t.Errorf("expected error for invalid output dir in ProcessImages")
+	}
+}
+
+func TestGenerateReport_OutCSVIsDir(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+	err := GenerateReport(inDir, outDir)
+	if err == nil {
+		t.Errorf("expected error when outCSV is a directory")
 	}
 }
