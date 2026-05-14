@@ -101,3 +101,10 @@ func TestProcessSingleImage_OutFileError(t *testing.T) {
 		t.Errorf("expected error when output file is a directory")
 	}
 }
+
+func TestProcessSingleImage_GetHandlerError(t *testing.T) {
+	err := processSingleImage("/non/existent/file.jpg", "/tmp/out.jpg", "clean")
+	if err == nil {
+		t.Errorf("expected error for non-existent input file")
+	}
+}

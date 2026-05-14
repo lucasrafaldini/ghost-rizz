@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -95,7 +96,7 @@ type pngHandler struct {
 func (h *pngHandler) DropExif() error {
 	exifChunk, err := h.cs.FindExif()
 	if err != nil {
-		if err == exif.ErrNoExif || strings.Contains(strings.ToLower(err.Error()), "no exif") {
+		if errors.Is(err, exif.ErrNoExif) || strings.Contains(strings.ToLower(err.Error()), "no exif") {
 			return nil
 		}
 		return err

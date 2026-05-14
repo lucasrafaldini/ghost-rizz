@@ -29,21 +29,16 @@ jobs:
         fi
 
     - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v9
+      uses: golangci/golangci-lint-action@v6
       with:
-        version: latest
+        version: v1.61.0
 
-    - name: Run Tests & Coverage
+    - name: Run Tests & Enforce Coverage
       run: |
         go test ./... -coverprofile=coverage.out
-        go tool cover -func=coverage.out
-
-    - name: Enforce Coverage Threshold
-      run: |
-        COVERAGE=$(go tool cover -func=coverage.out | grep total: | awk '{print $3}' | tr -d '%')
+        go tool cover -func=coverage.out > coverage_report.txt
+        cat coverage_report.txt
+        COVERAGE=$(grep "total:" coverage_report.txt | awk '{print $3}' | tr -d '%')
         echo "Total coverage: $COVERAGE%"
         # Requiring 85%+ due to unreachable extreme edge-case error branches and exiftool dependencies
-        if (( $(echo "$COVERAGE < 85.0" | bc -l) )); then
-          echo "Coverage is below 85.0% ($COVERAGE%)"
-          exit 1
-        fi
+        awk -v cov="$COVERAGE" 'BEGIN { if (cov < 85.0) { print "Coverage is below 85.0% (" cov "%)"; exit 1 } }'

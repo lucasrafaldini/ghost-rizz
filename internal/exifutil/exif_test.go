@@ -32,9 +32,35 @@ func TestBuildBaseEXIF(t *testing.T) {
 		t.Fatal("expected non-nil IfdBuilder")
 	}
 
-	// Basic check that root tags exist
-	_, err = ib.FindTagWithName("Make")
+	// Check root tags
+	for _, tag := range []string{"ImageWidth", "ImageLength", "Make", "Model", "Software", "DateTime"} {
+		_, err = ib.FindTagWithName(tag)
+		if err != nil {
+			t.Errorf("BuildBaseEXIF: missing %q tag: %v", tag, err)
+		}
+	}
+
+	// Check Exif IFD
+	exifIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/Exif")
 	if err != nil {
-		t.Errorf("BuildBaseEXIF: missing 'Make' tag: %v", err)
+		t.Fatalf("failed to get Exif IFD: %v", err)
+	}
+	for _, tag := range []string{"DateTimeOriginal", "ExposureTime"} {
+		_, err = exifIb.FindTagWithName(tag)
+		if err != nil {
+			t.Errorf("BuildBaseEXIF: missing %q tag: %v", tag, err)
+		}
+	}
+
+	// Check GPS IFD
+	gpsIb, err := exif.GetOrCreateIbFromRootIb(ib, "IFD/GPSInfo")
+	if err != nil {
+		t.Fatalf("failed to get GPS IFD: %v", err)
+	}
+	for _, tag := range []string{"GPSLatitudeRef", "GPSLatitude"} {
+		_, err = gpsIb.FindTagWithName(tag)
+		if err != nil {
+			t.Errorf("BuildBaseEXIF: missing %q tag: %v", tag, err)
+		}
 	}
 }

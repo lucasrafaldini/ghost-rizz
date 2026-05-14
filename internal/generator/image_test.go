@@ -3,6 +3,7 @@ package generator
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/dsoprea/go-exif/v3"
@@ -118,5 +119,17 @@ func TestAddTag_Error(t *testing.T) {
 	// An unknown tag name should return an error
 	if err := exifutil.AddTag(ib, "NonExistentTagXYZ_12345", "value"); err == nil {
 		t.Errorf("addTag with unknown tag name expected error, got nil")
+	}
+}
+
+func TestCreateDummyPNGWithEXIF_WriteError(t *testing.T) {
+	badPath := "/proc/invalid/path/png"
+	if runtime.GOOS == "darwin" {
+		badPath = "/System/nonexistent.png"
+	}
+
+	err := createDummyPNGWithEXIF(badPath)
+	if err == nil {
+		t.Errorf("expected error for unwritable path")
 	}
 }

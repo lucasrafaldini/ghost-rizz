@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -20,7 +21,7 @@ func processSingleImage(inPath, outPath, mode string) error {
 	switch mode {
 	case "clean":
 		err = mh.DropExif()
-		if err != nil && !strings.Contains(err.Error(), "no exif data") {
+		if err != nil && !errors.Is(err, exif.ErrNoExif) && !strings.Contains(strings.ToLower(err.Error()), "no exif") {
 			return err
 		}
 	case "fuzz":

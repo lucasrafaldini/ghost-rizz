@@ -2,6 +2,7 @@ package processor
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -79,15 +80,17 @@ func GenerateReport(inDir, outCSV string) error {
 			if err == nil {
 				tagMap := make(map[string]string)
 				for _, t := range flatTags {
-					tagMap[t.TagName] = t.FormattedFirst
+					// Key by IfdPath and TagName to avoid collisions (e.g. IFD0 vs ExifIFD)
+					key := fmt.Sprintf("%s:%s", t.IfdPath, t.TagName)
+					tagMap[key] = t.FormattedFirst
 				}
-				row[2] = tagMap["Make"]
-				row[3] = tagMap["Model"]
-				row[4] = tagMap["Software"]
-				row[5] = tagMap["DateTime"]
-				row[6] = tagMap["DateTimeOriginal"]
-				row[7] = tagMap["ExposureTime"]
-				row[8] = tagMap["GPSLatitude"]
+				row[2] = tagMap["IFD0:Make"]
+				row[3] = tagMap["IFD0:Model"]
+				row[4] = tagMap["IFD0:Software"]
+				row[5] = tagMap["IFD0:DateTime"]
+				row[6] = tagMap["IFD/Exif:DateTimeOriginal"]
+				row[7] = tagMap["IFD/Exif:ExposureTime"]
+				row[8] = tagMap["IFD/GPSInfo:GPSLatitude"]
 			}
 
 			rowCh <- row
@@ -104,17 +107,21 @@ func GenerateReport(inDir, outCSV string) error {
 		if writeErr == nil {
 			if err := writer.Write(row); err != nil {
 				writeErr = err
-				// drain remaining rows so the closer goroutine can finish
 			}
 		}
 	}
-	if writeErr != nil {
-		return writeErr
+
+	// Flush even on writeErr to ensure partial results are written if needed,
+	// or just return the error. Copilot suggested being more deliberate.
+	writer.Flush()
+	if flushErr := writer.Error(); flushErr != nil && writeErr == nil {
+		writeErr = flushErr
 	}
 
-	writer.Flush()
-	if err := writer.Error(); err != nil {
-		return err
+	if writeErr != nil {
+		_ = csvFile.Close()
+		_ = os.Remove(outCSV) // Remove partial/broken report
+		return writeErr
 	}
 
 	return nil

@@ -19,6 +19,9 @@ func TestIsSupportedFormat(t *testing.T) {
 		{"png", "test.png", true},
 		{"heic", "test.heic", true},
 		{"heif", "test.heif", true},
+		{"HeIf", "test.HeIf", true},
+		{"PNG_UP", "test.PNG", true},
+		{"Jpeg_MIX", "test.Jpeg", true},
 		{"txt", "test.txt", false},
 		{"noext", "test", false},
 		{"upper", "TEST.JPG", true},
@@ -43,6 +46,9 @@ func TestProcessImages(t *testing.T) {
 
 	// Add a non-supported file to test the skip branch
 	_ = os.WriteFile(filepath.Join(inDir, "skip.txt"), []byte("skip"), 0644)
+	
+	// Add a directory to test the skip branch
+	_ = os.MkdirAll(filepath.Join(inDir, "subdir"), 0755)
 
 	err = ProcessImages(inDir, outDir, "clean")
 	if err != nil {
@@ -133,5 +139,33 @@ func TestProcessImages_InvalidMode(t *testing.T) {
 	err = ProcessImages(inDir, outDir, "invalid_mode")
 	if err == nil {
 		t.Errorf("expected error for invalid mode in ProcessImages")
+	}
+}
+
+func TestProcessImages_MultipleErrors(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := t.TempDir()
+
+	// Create two unreadable files to trigger multiple errors
+	f1 := filepath.Join(inDir, "f1.jpg")
+	f2 := filepath.Join(inDir, "f2.jpg")
+	_ = os.WriteFile(f1, []byte("x"), 0000)
+	_ = os.WriteFile(f2, []byte("x"), 0000)
+	defer func() { _ = os.Chmod(f1, 0644); _ = os.Chmod(f2, 0644) }()
+
+	err := ProcessImages(inDir, outDir, "clean")
+	if err == nil {
+		t.Errorf("expected joined errors")
+	}
+}
+
+func TestProcessImages_OutDirCreationError(t *testing.T) {
+	inDir := t.TempDir()
+	outDir := filepath.Join(t.TempDir(), "file")
+	_ = os.WriteFile(outDir, []byte("x"), 0644)
+
+	err := ProcessImages(inDir, outDir, "clean")
+	if err == nil {
+		t.Errorf("expected error when outDir is a file")
 	}
 }
