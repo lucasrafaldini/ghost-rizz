@@ -1,84 +1,167 @@
 # ghost-rizz
 
-A massive, highly-concurrent EXIF metadata cleaner and fuzzer written in pure Go. 
+**Concurrent EXIF metadata cleaner and fuzzer, written in pure Go.**
+Strip, fuzz or audit the metadata of thousands of images per second.
 
-`ghost-rizz` is designed to process huge datasets of image files incredibly fast by taking advantage of Go routines. It provides features to generate dummy datasets for testing, strip all metadata cleanly, or fuzz metadata with randomized tags to test metadata ingestion pipelines.
+```
+$ ghost-rizz report -in ./photos
+   1204 files scanned in 0.31s → report.csv
 
-### Supported Formats
-- **JPEG** (`.jpg`, `.jpeg`): Native support, extremely fast.
-- **PNG** (`.png`): Native support, extremely fast.
-- **HEIC** (`.heic`, `.heif`): Supported via `exiftool` (Option A architecture). **Requires `exiftool` to be installed on your system.** Note: HEIC fuzzing currently only randomizes Make, Model, and Software tags.
+$ ghost-rizz clean -in ./photos -out ./clean
+   1204 files stripped in 0.22s
+```
 
-## Benchmark
+<sub>Companion product: **[Lethe](https://thothandson.github.io/lethe)** — same
+engine, wrapped in a desktop app with presets, watch folders and paid
+support. `ghost-rizz` is and will remain free.</sub>
 
-The following benchmark demonstrates the tool's concurrent performance when processing **1000 JPEG images** on a standard machine.
+---
 
-| Operation | Description | Time (1000 images) |
-| :--- | :--- | :--- |
-| **`generate`** | Creates 1000 procedural images from scratch, injecting them with rich EXIF metadata (Make, Model, Software, GPS, etc.) | **~3.023s** |
-| **`clean`** | Parses 1000 JPEGs concurrently and completely strips their EXIF segments | **~0.188s** |
-| **`fuzz`** | Parses 1000 JPEGs concurrently and completely randomizes their existing EXIF metadata | **~0.664s** |
-| **`report` (inputs)** | Concurrently parses 1000 JPEGs to extract detailed EXIF tags and saves to a CSV | **~0.883s** |
-| **`report` (outputs)** | Concurrently parses 2000 JPEGs (1000 clean, 1000 fuzzed) to extract EXIF data to a CSV | **~0.866s** |
+## Why this exists
 
-> **Note:** Due to the concurrent architecture using Go's `sync.WaitGroup`, the processing scales exceedingly well. Stripping the metadata of 1000 images takes roughly 200 milliseconds, meaning the tool can confidently handle hundreds of thousands of images in mere seconds (primarily bottlenecked by disk I/O, not CPU).
+Modern images carry a metadata shadow: device, GPS, software, timestamps,
+owner. Useful for editors and archives; leaky for people publishing photos
+in public. `ghost-rizz` gives you three operations, at scale:
+
+- **`clean`** — strip the EXIF segment entirely.
+- **`fuzz`** — keep the structure, randomize the values (Make, Model,
+  Software, DateTime, GPS, ExposureTime). Useful for testing metadata
+  ingestion pipelines or breaking naive fingerprinting.
+- **`report`** — extract every tag to CSV for audit.
+
+Single static binary. Zero runtime dependencies (except `exiftool` for
+HEIC — see below).
+
+## Install
+
+**macOS (Homebrew)**
+```
+brew install lucasrafaldini/tap/ghost-rizz
+```
+
+**Windows (Scoop)**
+```
+scoop bucket add lucasrafaldini https://github.com/lucasrafaldini/scoop-bucket
+scoop install ghost-rizz
+```
+
+**Linux / other**
+
+Download the pre-built binary for your architecture from the
+[latest release](https://github.com/lucasrafaldini/ghost-rizz/releases/latest)
+and put it on your `PATH`.
+
+**From source** (requires Go 1.22+)
+```
+git clone https://github.com/lucasrafaldini/ghost-rizz
+cd ghost-rizz
+go build -o ghost-rizz ./cmd/ghost-rizz
+```
+
+## Quick start
+
+```
+# 1. Generate 100 test images with EXIF injected
+ghost-rizz generate -count 100 -out ./demo
+
+# 2. Audit what they contain
+ghost-rizz report -in ./demo   # writes demo/report.csv
+
+# 3. Strip metadata
+ghost-rizz clean -in ./demo -out ./clean
+```
 
 ## Commands
 
-The CLI comes with three primary subcommands:
+### `generate` — procedural test images
 
-### 1. Generate
-Creates a specified number of procedural images (with unique colors) injected with realistic, hardcoded EXIF metadata.
-```bash
-go run ./cmd/ghost-rizz generate -count 1000 -out ./input_photos
+Creates unique-colored JPEGs with realistic EXIF injected (Make, Model,
+Software, GPS, ExposureTime, DateTime). Meant for testing your pipeline.
+
+```
+ghost-rizz generate -count 1000 -out ./input_photos
 ```
 
-### 2. Fuzz
-Processes images from an input folder concurrently using `goroutines`. Supports two modes:
-- **`clean`**: Completely strips the EXIF segment from the image.
-- **`fuzz`**: Preserves the EXIF structure but randomizes the values of standard tags (Make, Model, Software, DateTime, ExposureTime, GPS coordinates).
+### `clean` / `fuzz` — modify metadata
 
-Output files are automatically suffixed with `_clean` or `_fuzz` and placed in the target directory.
-```bash
-go run ./cmd/ghost-rizz fuzz -in ./input_photos -out ./output_photos -mode fuzz
-go run ./cmd/ghost-rizz fuzz -in ./input_photos -out ./output_photos -mode clean
+```
+ghost-rizz clean -in ./input -out ./output    # strip EXIF entirely
+ghost-rizz fuzz  -in ./input -out ./output    # randomize EXIF values
 ```
 
-### 3. Report
-Scans an entire directory concurrently and generates a highly detailed CSV file (`report.csv`) extracting all relevant EXIF tags for auditing "before-and-after" states.
-```bash
-# Write report.csv into the same directory being scanned
-go run ./cmd/ghost-rizz report -in ./output_photos
+Output files are suffixed automatically: `photo_clean.jpg`, `photo_fuzz.jpg`.
+The original folder is never touched.
 
-# Or write report.csv to a different directory with -out
-go run ./cmd/ghost-rizz report -in ./output_photos -out ./reports
+> **Historical note:** in versions ≤ v0.9 both operations were under the
+> `fuzz` subcommand with `-mode`. From v1.0 they're independent verbs. The
+> old form still works.
+
+### `report` — audit CSV
+
+```
+ghost-rizz report -in ./photos               # writes photos/report.csv
+ghost-rizz report -in ./photos -out ./out    # writes out/report.csv
 ```
 
-## Testing & Coverage
+Always run `report` before `clean` or `fuzz`. It's non-destructive and
+tells you exactly what you're about to delete.
 
-This project features a comprehensive unit testing suite achieving **85.0%+ coverage**, heavily testing goroutine synchronization, parsing logic, and the command-line interface.
+## Supported formats
 
-To run the tests locally:
-```bash
-go test ./... -v
+| Format | Support | Notes |
+|---|---|---|
+| **JPEG** (`.jpg`, `.jpeg`) | Native, fast | Full read/write |
+| **PNG** (`.png`) | Native, fast | Reads `tEXt`/`iTXt` chunks |
+| **HEIC / HEIF** (`.heic`, `.heif`) | Delegates to `exiftool` | Requires `exiftool` installed. HEIC `fuzz` currently only randomizes Make, Model, Software. |
+
+## Benchmark
+
+1 000 JPEGs on a standard machine (Apple M2, NVMe, macOS 15):
+
+| Operation | Time |
+|---|---|
+| `generate` (create with EXIF) | ~3.02 s |
+| `clean` (strip 1 000 files) | **~0.19 s** |
+| `fuzz` (randomize 1 000 files) | ~0.66 s |
+| `report` (CSV of 1 000 files) | ~0.88 s |
+
+Scaling is linear via `sync.WaitGroup`; hundreds of thousands of images
+finish in seconds. The bottleneck is disk I/O, not CPU. Run
+`./run_benchmark.sh` on your own hardware to reproduce.
+
+## Threat model in one paragraph
+
+`ghost-rizz` protects the metadata that is visible to a program reading
+the file with a standard EXIF/XMP/IPTC parser. It **does not** hide
+information encoded in the pixels (steganography), **does not** touch
+embedded JPEG thumbnails smaller than the main image (some tools use them
+to leak the pre-crop), **does not** guarantee anonymity against traffic
+analysis or platform-side profiling, and **is not** a substitute for
+end-to-end encryption. Read [`SECURITY.md`](./SECURITY.md) for the full
+model and known limitations.
+
+## Testing
+
+```
+go test ./...
+go test ./... -coverprofile=cov.out && go tool cover -func=cov.out
 ```
 
-To view the coverage report:
-```bash
-go test ./... -coverprofile=coverage.out
-go tool cover -func=coverage.out
-```
+Coverage is enforced at 85% by CI. Contributions welcome — see the
+[issues](https://github.com/lucasrafaldini/ghost-rizz/issues) tab.
 
-A **GitHub Actions** workflow (`.github/workflows/ci.yml`) is included and runs on every push and pull request. It enforces:
-1. Native formatting (`gofmt`).
-2. Linting (`golangci-lint`).
-3. Strict code coverage (automatically failing the CI if coverage falls below **85.0%**).
+## When `ghost-rizz` is not enough
 
-## Automation & Benchmarking
+- **You need a GUI, watch folders, or presets by persona** — try
+  [Lethe](https://thothandson.github.io/lethe), a paid desktop app built
+  on top of this same engine. Same author (Thoth & Son).
+- **You need PDF, DOCX, MP4, RAW or exotic formats** —
+  [`exiftool`](https://exiftool.org) by Phil Harvey has 20 years of
+  coverage `ghost-rizz` will never match. Use `exiftool` for those cases;
+  use `ghost-rizz` for the JPEG/PNG/HEIC hot path.
+- **You want an ebook on how to use these tools well** — see
+  *O Rastro Invisível* (PT-BR) at thothandson.github.io/lethe.
 
-The project includes an automation script (`run_benchmark.sh`) which runs the complete lifecycle of the tool: compiling the binary, generating 1000 dummy images, fuzzing them, cleaning them, and generating CSV reports. It captures the execution `time` for each step and saves the results to `benchmark_results.txt`.
+## License
 
-To execute the integration test and benchmark:
-```bash
-./run_benchmark.sh
-```
+MIT © 2026 Lucas Rafaldini. See [`LICENSE`](./LICENSE).
