@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ThothandSon/ghost-rizz/internal/generator"
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
-	"github.com/ThothandSon/ghost-rizz/internal/generator"
 )
 
 func TestGetMediaHandler(t *testing.T) {
