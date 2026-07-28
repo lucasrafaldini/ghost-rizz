@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/outis/ghost-rizz/internal/generator"
+	"github.com/ThothandSon/ghost-rizz/internal/generator"
 )
 
 func TestIsSupportedFormat(t *testing.T) {

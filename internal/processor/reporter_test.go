@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/outis/ghost-rizz/internal/generator"
+	"github.com/ThothandSon/ghost-rizz/internal/generator"
 )
 
 func TestGenerateReport(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/outis/ghost-rizz/internal/generator"
-	"github.com/outis/ghost-rizz/internal/processor"
+	"github.com/ThothandSon/ghost-rizz/internal/generator"
+	"github.com/ThothandSon/ghost-rizz/internal/processor"
 )
 
 // Allow mocking output in tests

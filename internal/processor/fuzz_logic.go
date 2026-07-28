@@ -10,7 +10,7 @@ import (
 
 	"github.com/dsoprea/go-exif/v3"
 	exifcommon "github.com/dsoprea/go-exif/v3/common"
-	"github.com/outis/ghost-rizz/internal/exifutil"
+	"github.com/ThothandSon/ghost-rizz/internal/exifutil"
 )
 
 func processSingleImage(inPath, outPath, mode string) error {

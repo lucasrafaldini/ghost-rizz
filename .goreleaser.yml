@@ -1,0 +1,86 @@
+version: 2
+
+project_name: ghost-rizz
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: ghost-rizz
+    main: ./cmd/ghost-rizz/
+    binary: ghost-rizz
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+universal_binaries:
+  - id: ghost-rizz
+    replace: true
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+
+brews:
+  - repository:
+      owner: ThothandSon
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://thothandson.github.io/lethe"
+    description: "EXIF metadata cleaner — strip all metadata from your photos in bulk"
+    license: "MIT"
+    test: |
+      system "#{bin}/ghost-rizz", "--help"
+    install: |
+      bin.install "ghost-rizz"
+
+scoops:
+  - repository:
+      owner: ThothandSon
+      name: scoop-bucket
+      token: "{{ .Env.SCOOP_BUCKET_TOKEN }}"
+    homepage: "https://thothandson.github.io/lethe"
+    description: "EXIF metadata cleaner — strip all metadata from your photos in bulk"
+    license: "MIT"
+
+release:
+  github:
+    owner: ThothandSon
+    name: ghost-rizz
+  draft: false
+  prerelease: auto
+  name_template: "v{{ .Version }}"

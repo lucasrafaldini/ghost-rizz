@@ -113,7 +113,7 @@ with a note describing the fix (without gratuitously enumerating the
 attack).
 
 Cosmetic issues, feature requests and non-security bugs belong in the
-public [issues](https://github.com/lucasrafaldini/ghost-rizz/issues)
+public [issues](https://github.com/ThothandSon/ghost-rizz/issues)
 tab.
 
 ---

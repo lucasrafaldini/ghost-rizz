@@ -36,24 +36,24 @@ HEIC — see below).
 
 **macOS (Homebrew)**
 ```
-brew install lucasrafaldini/tap/ghost-rizz
+brew install ThothandSon/tap/ghost-rizz
 ```
 
 **Windows (Scoop)**
 ```
-scoop bucket add lucasrafaldini https://github.com/lucasrafaldini/scoop-bucket
+scoop bucket add thothandson https://github.com/ThothandSon/scoop-bucket
 scoop install ghost-rizz
 ```
 
 **Linux / other**
 
 Download the pre-built binary for your architecture from the
-[latest release](https://github.com/lucasrafaldini/ghost-rizz/releases/latest)
+[latest release](https://github.com/ThothandSon/ghost-rizz/releases/latest)
 and put it on your `PATH`.
 
 **From source** (requires Go 1.22+)
 ```
-git clone https://github.com/lucasrafaldini/ghost-rizz
+git clone https://github.com/ThothandSon/ghost-rizz
 cd ghost-rizz
 go build -o ghost-rizz ./cmd/ghost-rizz
 ```
@@ -148,7 +148,7 @@ go test ./... -coverprofile=cov.out && go tool cover -func=cov.out
 ```
 
 Coverage is enforced at 85% by CI. Contributions welcome — see the
-[issues](https://github.com/lucasrafaldini/ghost-rizz/issues) tab.
+[issues](https://github.com/ThothandSon/ghost-rizz/issues) tab.
 
 ## When `ghost-rizz` is not enough
 
