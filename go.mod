@@ -1,4 +1,4 @@
-module github.com/outis/ghost-rizz
+module github.com/ThothandSon/ghost-rizz
 
 go 1.24
 

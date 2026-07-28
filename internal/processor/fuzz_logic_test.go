@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/outis/ghost-rizz/internal/generator"
+	"github.com/ThothandSon/ghost-rizz/internal/generator"
 )
 
 func TestGenerateRandomString(t *testing.T) {
