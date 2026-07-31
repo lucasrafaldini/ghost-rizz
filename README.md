@@ -160,8 +160,8 @@ Coverage is enforced at 85% by CI. Contributions welcome — see the
   coverage `ghost-rizz` will never match. Use `exiftool` for those cases;
   use `ghost-rizz` for the JPEG/PNG/HEIC hot path.
 - **You want an ebook on how to use these tools well** — see
-  *O Rastro Invisível* (PT-BR) at thothandson.github.io/lethe.
+  *Rastro Zero* (PT-BR) at thothandson.github.io/lethe.
 
 ## License
 
-MIT © 2026 Lucas Rafaldini. See [`LICENSE`](./LICENSE).
+MIT © 2026 Thoth & Son. See [`LICENSE`](./LICENSE).
